@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>日報入力</title>
+</head>
+<body>
+  <h2>作業日報</h2>
+
+  日付：<input type="date" id="date"><br><br>
+
+  勤務区分：
+  <select id="type">
+    <option>通常</option>
+    <option>残業</option>
+    <option>休日</option>
+  </select><br><br>
+
+  開始時間：<input type="time" id="start"><br><br>
+  終了時間：<input type="time" id="end"><br><br>
+
+  作業内容：<br>
+  <textarea id="work"></textarea><br><br>
+
+  連絡事項：<br>
+  <textarea id="note"></textarea><br><br>
+
+  <button onclick="send()">送信</button>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<script>
+async function send() {
+  await liff.init({ liffId: "あなたのLIFF_ID" });
+  const profile = await liff.getProfile();
+
+  const data = {
+    name: profile.displayName,
+    userId: profile.userId,
+    date: document.getElementById("date").value,
+    type: document.getElementById("type").value,
+    start: document.getElementById("start").value,
+    end: document.getElementById("end").value,
+    work: document.getElementById("work").value,
+    note: document.getElementById("note").value
+  };
+
+  fetch("GASのURL", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+
+  alert("送信しました！");
+}
+</script>
+</body>
+</html>
