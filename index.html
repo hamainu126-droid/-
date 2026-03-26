@@ -10,8 +10,8 @@
   日付：<input type="date" id="date"><br><br>
 
   氏名：<br>
-　<textarea id="work"></textarea><br><br>
-  
+  <input type="text" id="name"><br><br>
+
   勤務時間区分：
   <select id="type">
     <option>昼勤</option>
@@ -28,7 +28,7 @@
   連絡事項：<br>
   <textarea id="note"></textarea><br><br>
 
- <button onclick="sendData()">送信</button>
+  <button onclick="sendData()">送信</button>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
@@ -54,6 +54,7 @@ async function sendData() {
 
   const text = await res.text();
   alert(text);
+}
 </script>
 </body>
 </html>
