@@ -48,6 +48,7 @@ async function sendData() {
   try {
     const res = await fetch("https://script.google.com/macros/s/AKfycbzMFbmIJxgH-VrmOywhhPu2xq1nXhCXWHzwtFSUN4gtmYyIrmjpHIlKeg-ttjRdJssB9w/exec", {
       method: "POST",
+       mode: "no-cors",  // ←追加
       headers: {
         "Content-Type": "application/json"
       },
