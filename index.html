@@ -30,9 +30,10 @@
 
   <button onclick="sendData()">送信</button>
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 async function sendData() {
+  alert("送信ボタン押された"); // ←確認用
+
   const data = {
     date: document.getElementById("date").value,
     name: document.getElementById("name").value,
@@ -44,17 +45,23 @@ async function sendData() {
     userId: "test"
   };
 
-  const res = await fetch("https://script.google.com/macros/s/AKfycbwWodGEG9RMgYovuEsLeuJ3aXYAAMgbp1nRv74U6zGEfRnb6FfMoeVSoHqegeGf9IVr/exec", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  });
+  try {
+    const res = await fetch("https://script.google.com/macros/s/AKfycbwWodGEG9RMgYovuEsLeuJ3aXYAAMgbp1nRv74U6zGEfRnb6FfMoeVSoHqegeGf9IVr/exec", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
 
-  const text = await res.text();
-  alert(text);
+    const text = await res.text();
+    alert("結果：" + text);
+
+  } catch (e) {
+    alert("エラー：" + e);
+  }
 }
 </script>
+
 </body>
 </html>
