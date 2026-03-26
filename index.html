@@ -32,28 +32,28 @@
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
-async function send() {
-  await liff.init({ liffId: "2009609532-pYjsxOfo" });
-  const profile = await liff.getProfile();
-
+async function sendData() {
   const data = {
-    name: profile.displayName,
-    userId: profile.userId,
     date: document.getElementById("date").value,
+    name: document.getElementById("name").value,
     type: document.getElementById("type").value,
     start: document.getElementById("start").value,
     end: document.getElementById("end").value,
     work: document.getElementById("work").value,
-    note: document.getElementById("note").value
+    note: document.getElementById("note").value,
+    userId: "test"
   };
 
-  fetch("https://script.google.com/macros/s/AKfycbwWodGEG9RMgYovuEsLeuJ3aXYAAMgbp1nRv74U6zGEfRnb6FfMoeVSoHqegeGf9IVr/exec", {
+  const res = await fetch("https://script.google.com/macros/s/AKfycbwWodGEG9RMgYovuEsLeuJ3aXYAAMgbp1nRv74U6zGEfRnb6FfMoeVSoHqegeGf9IVr/exec", {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body: JSON.stringify(data)
   });
 
-  alert("送信しました！");
-}
+  const text = await res.text();
+  alert(text);
 </script>
 </body>
 </html>
