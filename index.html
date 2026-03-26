@@ -33,7 +33,7 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 async function send() {
-  await liff.init({ liffId: "あなたのLIFF_ID" });
+  await liff.init({ liffId: "2009609532-pYjsxOfo" });
   const profile = await liff.getProfile();
 
   const data = {
@@ -47,7 +47,7 @@ async function send() {
     note: document.getElementById("note").value
   };
 
-  fetch("https://script.google.com/macros/s/AKfycbwlcTe36ygZQH7n4QdiCTzr-kmEFd4oNTIWpU6NjUG0YSufxJzQDl6Yu1qm2oIqlqD1aQ/exec", {
+  fetch("https://script.google.com/macros/s/AKfycbzs9nky8euT5GIjwfSx5LC6kbgZ7mYuN6DSzNUr8YcGgqG077SY1B1AbtzDwDSwYVbL9Q/exec", {
     method: "POST",
     body: JSON.stringify(data)
   });
