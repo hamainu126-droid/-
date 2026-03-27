@@ -30,9 +30,16 @@
 
   <button onclick="sendData()">送信</button>
 
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <script>
 async function sendData() {
-  alert("送信ボタン押された"); // ←確認用
+
+  const btn = document.querySelector("button");
+  btn.disabled = true;
+
+  // 👇ここに追加（最重要）
+  await liff.init({ liffId: "あなたのLIFF_ID" });
+  const profile = await liff.getProfile();
 
   const data = {
     date: document.getElementById("date").value,
@@ -42,27 +49,30 @@ async function sendData() {
     end: document.getElementById("end").value,
     work: document.getElementById("work").value,
     note: document.getElementById("note").value,
-    userId: "test"
+
+    // 👇ここを変更
+    userId: profile.userId
   };
 
-  try {
-    const res = await fetch("https://script.google.com/macros/s/AKfycbzMFbmIJxgH-VrmOywhhPu2xq1nXhCXWHzwtFSUN4gtmYyIrmjpHIlKeg-ttjRdJssB9w/exec", {
-      method: "POST",
-       mode: "no-cors",  // ←追加
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    });
-
-    const text = await res.text();
-    alert("結果：" + text);
-
-  } catch (e) {
-    alert("エラー：" + e);
+  if (!data.date || !data.name || !data.start || !data.end) {
+    alert("日付・氏名・開始・終了は必須です");
+    btn.disabled = false;
+    return;
   }
+
+  await fetch("https://script.google.com/macros/s/AKfycbwWodGEG9RMgYovuEsLeuJ3aXYAAMgbp1nRv74U6zGEfRnb6FfMoeVSoHqegeGf9IVr/exec", {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
+
+  alert("送信しました！");
+  liff.closeWindow();
 }
 </script>
-
+ 
 </body>
 </html>
