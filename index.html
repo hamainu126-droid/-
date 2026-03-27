@@ -45,7 +45,7 @@
 
       // プロフィール取得
       const profile = await liff.getProfile();
-
+　　
       const data = {
         date: document.getElementById("date").value,
         name: document.getElementById("name").value || profile.displayName,
@@ -65,7 +65,7 @@
       }
 
       // GAS送信
-      await fetch("https://script.google.com/macros/s/AKfycbw4PhDjJY9gUeDxkOhuyGONu5RncnnucVqNmzWdTm_PKhFBd7raYHzm9paPPtvxoBkHqg/exec", {
+      await fetch("https://script.google.com/macros/s/AKfycbzw4PH2Os30lrD3euny2f1s5fvlsASox1_WguS_IO3Ov8YANwFtGm_SA1HG9Z-Op5Y1cg/exec", {
         method: "POST",
         mode: "no-cors",
         headers: {
