@@ -30,49 +30,61 @@
 
   <button onclick="sendData()">送信</button>
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-<script>
-async function sendData() {
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-  const btn = document.querySelector("button");
-  btn.disabled = true;
+  <script>
+  async function sendData() {
 
-  // 👇ここに追加（最重要）
-  await liff.init({ liffId: "2009609532-pYjsxOfo" });
-  const profile = await liff.getProfile();
+    const btn = document.querySelector("button");
+    btn.disabled = true;
 
-  const data = {
-    date: document.getElementById("date").value,
-    name: document.getElementById("name").value,
-    type: document.getElementById("type").value,
-    start: document.getElementById("start").value,
-    end: document.getElementById("end").value,
-    work: document.getElementById("work").value,
-    note: document.getElementById("note").value,
+    try {
+      // 🔥 LIFF初期化（ここに自分のLIFF ID入れる）
+      await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
-    // 👇ここを変更
-    userId: profile.userId
-  };
+      // プロフィール取得
+      const profile = await liff.getProfile();
 
-  if (!data.date || !data.name || !data.start || !data.end) {
-    alert("日付・氏名・開始・終了は必須です");
-    btn.disabled = false;
-    return;
+      const data = {
+        date: document.getElementById("date").value,
+        name: document.getElementById("name").value || profile.displayName,
+        type: document.getElementById("type").value,
+        start: document.getElementById("start").value,
+        end: document.getElementById("end").value,
+        work: document.getElementById("work").value,
+        note: document.getElementById("note").value,
+        userId: profile.userId
+      };
+
+      // 必須チェック
+      if (!data.date || !data.start || !data.end) {
+        alert("日付・開始・終了は必須です");
+        btn.disabled = false;
+        return;
+      }
+
+      // GAS送信
+      await fetch("https://script.google.com/macros/s/AKfycbzMFbmIJxgH-VrmOywhhPu2xq1nXhCXWHzwtFSUN4gtmYyIrmjpHIlKeg-ttjRdJssB9w/exec", {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      alert("送信しました！");
+      
+      // LINE画面閉じる
+      liff.closeWindow();
+
+    } catch (e) {
+      alert("エラー：" + e);
+      btn.disabled = false;
+    }
   }
+  </script>
 
-  await fetch("https://script.google.com/macros/s/AKfycbzMFbmIJxgH-VrmOywhhPu2xq1nXhCXWHzwtFSUN4gtmYyIrmjpHIlKeg-ttjRdJssB9w/exec", {
-    method: "POST",
-    mode: "no-cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  });
-
-  alert("送信しました！");
-  liff.closeWindow();
-}
-</script>
- 
 </body>
 </html>
