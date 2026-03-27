@@ -38,7 +38,7 @@ async function sendData() {
   btn.disabled = true;
 
   // 👇ここに追加（最重要）
-  await liff.init({ liffId: "あなたのLIFF_ID" });
+  await liff.init({ liffId: "2009609532-pYjsxOfo" });
   const profile = await liff.getProfile();
 
   const data = {
@@ -60,7 +60,7 @@ async function sendData() {
     return;
   }
 
-  await fetch("https://script.google.com/macros/s/AKfycbwWodGEG9RMgYovuEsLeuJ3aXYAAMgbp1nRv74U6zGEfRnb6FfMoeVSoHqegeGf9IVr/exec", {
+  await fetch("https://script.google.com/macros/s/AKfycbzMFbmIJxgH-VrmOywhhPu2xq1nXhCXWHzwtFSUN4gtmYyIrmjpHIlKeg-ttjRdJssB9w/exec", {
     method: "POST",
     mode: "no-cors",
     headers: {
