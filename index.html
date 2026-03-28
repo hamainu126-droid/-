@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>日報入力</title>
+<title>作業日報</title>
 
 <style>
 body {
@@ -10,34 +10,65 @@ body {
   background: #f5f5f5;
   margin: 0;
 }
+
 .container {
   max-width: 500px;
   margin: auto;
   padding: 20px;
 }
+
 .card {
   background: white;
   padding: 20px;
   border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
+
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+label {
+  font-size: 13px;
+  color: #666;
+}
+
 input, select, textarea {
   width: 100%;
   padding: 10px;
-  margin-bottom: 15px;
+  margin: 5px 0 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
 }
+
+textarea {
+  min-height: 80px;
+}
+
 button {
   width: 100%;
   padding: 15px;
   background: #06C755;
   color: white;
   border: none;
+  border-radius: 10px;
+  font-size: 16px;
 }
+
+button:disabled {
+  background: gray;
+}
+
 .status {
   text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
 }
 </style>
-
 </head>
+
 <body>
 
 <div class="container">
@@ -45,30 +76,30 @@ button {
 
     <h2>作業日報</h2>
 
-   <label>日付</label>
-<input type="date" id="date">
+    <label>日付</label>
+    <input type="date" id="date">
 
-<label>氏名</label>
-<input type="text" id="name">
+    <label>氏名</label>
+    <input type="text" id="name">
 
-<label>勤務区分</label>
-<select id="type">
-  <option>昼勤</option>
-  <option>夜勤</option>
-  <option>休日</option>
-</select>
+    <label>勤務区分</label>
+    <select id="type">
+      <option>昼勤</option>
+      <option>夜勤</option>
+      <option>休日</option>
+    </select>
 
-<label>開始時間</label>
-<input type="time" id="start">
+    <label>開始時間</label>
+    <input type="time" id="start">
 
-<label>終了時間</label>
-<input type="time" id="end">
+    <label>終了時間</label>
+    <input type="time" id="end">
 
-<label>作業内容</label>
-<textarea id="work"></textarea>
+    <label>作業内容</label>
+    <textarea id="work"></textarea>
 
-<label>連絡事項</label>
-<textarea id="note"></textarea>
+    <label>連絡事項</label>
+    <textarea id="note"></textarea>
 
     <button id="btn" onclick="sendData()">送信</button>
 
@@ -82,9 +113,10 @@ button {
 <script>
 let userId = "";
 
+// ===== 初期化 =====
 window.onload = async () => {
   try {
-    await liff.init({ liffId: "2009609532-pYjsxOfo" });
+    await liff.init({ liffId: "あなたのLIFF_ID" });
 
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -94,15 +126,19 @@ window.onload = async () => {
     const profile = await liff.getProfile();
     userId = profile.userId;
 
-    name.value = profile.displayName;
+    // 名前自動入力
+    document.getElementById("name").value = profile.displayName;
 
-    date.value = new Date().toISOString().split('T')[0];
+    // 今日の日付
+    document.getElementById("date").value =
+      new Date().toISOString().split('T')[0];
 
   } catch (e) {
-    alert("初期化エラー");
+    alert("初期化エラー：" + e.message);
   }
 };
 
+// ===== 送信処理 =====
 async function sendData() {
   const btn = document.getElementById("btn");
   const status = document.getElementById("status");
@@ -113,22 +149,28 @@ async function sendData() {
   }
 
   const data = {
-    date: date.value,
-    name: name.value,
-    type: type.value,
-    start: start.value,
-    end: end.value,
-    work: work.value,
-    note: note.value,
+    date: document.getElementById("date").value,
+    name: document.getElementById("name").value,
+    type: document.getElementById("type").value,
+    start: document.getElementById("start").value,
+    end: document.getElementById("end").value,
+    work: document.getElementById("work").value,
+    note: document.getElementById("note").value,
     userId: userId
   };
+
+  // 入力チェック
+  if (!data.start || !data.end) {
+    alert("開始・終了時間を入力してください");
+    return;
+  }
 
   btn.disabled = true;
   btn.innerText = "送信中...";
   status.innerText = "送信しています...";
 
   try {
-    const res = await fetch("https://script.google.com/macros/s/AKfycbxWVqaPkNatjB7h5LBk-SeroN-q0wvUKo3p60B4Z3C3Sfhvmp4eBLlHT8OX3FY5VQILSw/exec", {
+    const res = await fetch("GASのURLをここに", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -140,7 +182,10 @@ async function sendData() {
     console.log(text);
 
     status.innerText = "送信完了 👍";
-    setTimeout(() => liff.closeWindow(), 800);
+
+    setTimeout(() => {
+      liff.closeWindow();
+    }, 800);
 
   } catch (e) {
     status.innerText = "通信エラー";
