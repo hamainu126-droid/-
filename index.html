@@ -7,95 +7,182 @@
 <style>
 body {
   font-family: sans-serif;
-  padding: 20px;
+  background: #f5f5f5;
+  margin: 0;
+}
+
+.container {
   max-width: 500px;
   margin: auto;
+  padding: 20px;
 }
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+h2 {
+  text-align: center;
+}
+
+label {
+  font-size: 14px;
+  color: #555;
+}
+
 input, select, textarea {
   width: 100%;
   padding: 10px;
-  margin-bottom: 15px;
+  margin: 5px 0 15px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
+
 button {
   width: 100%;
   padding: 15px;
   background: #06C755;
   color: white;
   border: none;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+button:disabled {
+  background: gray;
+}
+
+.status {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 14px;
 }
 </style>
 </head>
 
 <body>
 
-<h2>作業日報</h2>
+<div class="container">
+  <div class="card">
 
-<input type="date" id="date">
-<input type="text" id="name">
+    <h2>作業日報</h2>
 
-<select id="type">
-  <option>昼勤</option>
-  <option>夜勤</option>
-  <option>休日</option>
-</select>
+    <label>日付</label>
+    <input type="date" id="date">
 
-<input type="time" id="start">
-<input type="time" id="end">
+    <label>氏名</label>
+    <input type="text" id="name">
 
-<textarea id="work" placeholder="作業内容"></textarea>
-<textarea id="note" placeholder="連絡事項"></textarea>
+    <label>勤務区分</label>
+    <select id="type">
+      <option>昼勤</option>
+      <option>夜勤</option>
+      <option>休日</option>
+    </select>
 
-<button onclick="sendData()">送信</button>
+    <label>開始時間</label>
+    <input type="time" id="start">
+
+    <label>終了時間</label>
+    <input type="time" id="end">
+
+    <label>作業内容</label>
+    <textarea id="work"></textarea>
+
+    <label>連絡事項</label>
+    <textarea id="note"></textarea>
+
+    <button id="btn" onclick="sendData()">送信</button>
+
+    <div class="status" id="status"></div>
+
+  </div>
+</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
 
-window.onload = async function () {
-  await liff.init({ liffId: "2009609532-pYjsxOfo" });
+window.onload = async () => {
+  try {
+    await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+
+    document.getElementById("name").value = profile.displayName;
+
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("date").value = today;
+
+  } catch (e) {
+    alert("初期化エラー：" + e.message);
   }
-
-  const profile = await liff.getProfile();
-  userId = profile.userId;
-
-  document.getElementById("name").value = profile.displayName;
-
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById("date").value = today;
 };
 
 async function sendData() {
+  const btn = document.getElementById("btn");
+  const status = document.getElementById("status");
+
   if (!userId) {
     alert("LINE内で開いてください");
     return;
   }
 
   const data = {
-    date: document.getElementById("date").value,
-    name: document.getElementById("name").value,
-    type: document.getElementById("type").value,
-    start: document.getElementById("start").value,
-    end: document.getElementById("end").value,
-    work: document.getElementById("work").value,
-    note: document.getElementById("note").value,
+    date: date.value,
+    name: name.value,
+    type: type.value,
+    start: start.value,
+    end: end.value,
+    work: work.value,
+    note: note.value,
     userId: userId
   };
 
-  await fetch("https://script.google.com/macros/s/AKfycbxaF6vIIYEt5NY5Vrp8dAKyznPc9Oa97OlbgdZLhEp-HyTS9LfbyvG5BLbc6UWJTXWZHA/exec", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  });
+  if (!data.start || !data.end) {
+    alert("時間を入力してください");
+    return;
+  }
 
-  alert("送信完了");
-  liff.closeWindow();
+  btn.disabled = true;
+  btn.innerText = "送信中...";
+  status.innerText = "送信しています...";
+
+  try {
+    const res = await fetch("https://script.google.com/macros/s/AKfycby04TRIfQMbw0MPetu4B1NJChVHkmo9lStu7q8_JU-pJPlKpFkGeFhtAz0dh-nqr0qZTw/exec", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
+    });
+
+    const result = await res.json();
+
+    if (result.status === "OK") {
+      status.innerText = "送信完了 👍";
+      setTimeout(() => liff.closeWindow(), 800);
+    } else {
+      status.innerText = "エラー：" + result.message;
+      btn.disabled = false;
+      btn.innerText = "送信";
+    }
+
+  } catch (e) {
+    status.innerText = "通信エラー";
+    btn.disabled = false;
+    btn.innerText = "送信";
+  }
 }
 </script>
 
