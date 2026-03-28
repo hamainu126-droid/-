@@ -63,13 +63,19 @@ button {
 <script>
 async function sendData() {
   try {
-    // LIFF初期化
+    alert("①開始");
+
     await liff.init({ liffId: "2009609532-pYjsxOfo" });
+    alert("②LIFF初期化OK");
 
-    // ユーザー情報取得
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
     const profile = await liff.getProfile();
+    alert("③プロフィール取得OK");
 
-    // 入力値取得
     const data = {
       date: document.getElementById("date").value,
       name: document.getElementById("name").value,
@@ -81,40 +87,25 @@ async function sendData() {
       userId: profile.userId
     };
 
-    // 入力チェック
-    if (!data.name || !data.start || !data.end) {
-      alert("氏名・開始時間・終了時間は必須です");
-      return;
-    }
+    alert("④データOK");
 
-    // 送信
-    const res = await fetch("https://script.google.com/macros/s/AKfycbzUpqNJtlxIDXJHVF1NVTfDla5XroDFbYUlZ4GJJtvkvDWlUo2MYu9boeAUae206O_czw/exec", {
+    await fetch("https://script.google.com/macros/s/AKfycbzUpqNJtlxIDXJHVF1NVTfDla5XroDFbYUlZ4GJJtvkvDWlUo2MYu9boeAUae206O_czw/exec", {
       method: "POST",
+      mode: "no-cors",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(data)
     });
 
-    const text = await res.text();
+    alert("⑤送信OK");
 
-    // 成功表示
-    alert("送信完了しました！");
-
-    // LINE画面閉じる
     liff.closeWindow();
 
   } catch (e) {
     alert("エラー：" + e.message);
   }
 }
-
-
-// 今日の日付を自動セット
-window.onload = function() {
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById("date").value = today;
-};
 </script>
 
 </body>
