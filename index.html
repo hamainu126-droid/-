@@ -27,15 +27,23 @@ window.onload = async () => {
 };
 
 async function sendData() {
-  alert("押された");
+  alert("①押された");
 
-  await fetch("https://script.google.com/macros/s/AKfycbwjyrdulmaDizDQcA434HsC80ZKGxwHMmaUA0lrV_w4xRqePnOd0mLgjDwnJpaUfuU3NA/exec", {
-    method: "POST",
-    mode: "no-cors",
-    body: JSON.stringify({ test: "ok", userId: userId })
-  });
+  try {
+    await fetch("https://script.google.com/macros/s/AKfycbwjyrdulmaDizDQcA434HsC80ZKGxwHMmaUA0lrV_w4xRqePnOd0mLgjDwnJpaUfuU3NA/exec", {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify({
+        test: "ok",
+        userId: userId
+      })
+    });
 
-  alert("送信OK");
+    alert("②送信OK");
+
+  } catch (e) {
+    alert("③エラー");
+  }
 }
 </script>
 
