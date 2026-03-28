@@ -8,6 +8,8 @@
 body {
   font-family: sans-serif;
   padding: 20px;
+  max-width: 500px;
+  margin: auto;
 }
 input, select, textarea {
   width: 100%;
@@ -24,7 +26,6 @@ button {
   font-size: 18px;
 }
 </style>
-
 </head>
 
 <body>
@@ -35,7 +36,7 @@ button {
 <input type="date" id="date">
 
 氏名：
-<input type="text" id="name" placeholder="名前を入力">
+<input type="text" id="name">
 
 勤務区分：
 <select id="type">
@@ -51,22 +52,22 @@ button {
 <input type="time" id="end">
 
 作業内容：
-<textarea id="work" placeholder="作業内容を入力"></textarea>
+<textarea id="work"></textarea>
 
 連絡事項：
-<textarea id="note" placeholder="連絡事項があれば入力"></textarea>
+<textarea id="note"></textarea>
 
-<button onclick="sendData()">送信</button>
+<button id="sendBtn" onclick="sendData()">送信</button>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
-async function sendData() {
-  try {
-    alert("①開始");
+let userId = "";
 
+// ===== 初期処理 =====
+window.onload = async function () {
+  try {
     await liff.init({ liffId: "2009609532-pYjsxOfo" });
-    alert("②LIFF初期化OK");
 
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -74,7 +75,24 @@ async function sendData() {
     }
 
     const profile = await liff.getProfile();
-    alert("③プロフィール取得OK");
+    userId = profile.userId;
+
+    // 名前自動入力
+    document.getElementById("name").value = profile.displayName;
+
+    // 今日の日付
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById("date").value = today;
+
+  } catch (e) {
+    alert("初期化エラー：" + e.message);
+  }
+};
+
+// ===== 送信処理 =====
+async function sendData() {
+  try {
+    const btn = document.getElementById("sendBtn");
 
     const data = {
       date: document.getElementById("date").value,
@@ -84,22 +102,30 @@ async function sendData() {
       end: document.getElementById("end").value,
       work: document.getElementById("work").value,
       note: document.getElementById("note").value,
-      userId: profile.userId
+      userId: userId
     };
 
-    alert("④データOK");
+    // 入力チェック
+    if (!data.name || !data.start || !data.end) {
+      alert("必須項目を入力してください");
+      return;
+    }
 
-    await fetch("https://script.google.com/macros/s/AKfycbzUpqNJtlxIDXJHVF1NVTfDla5XroDFbYUlZ4GJJtvkvDWlUo2MYu9boeAUae206O_czw/exec", {
+    if (!confirm("送信しますか？")) return;
+
+    // ボタンロック
+    btn.disabled = true;
+    btn.innerText = "送信中...";
+
+    const res = await fetch("https://script.google.com/macros/s/AKfycbw9Tovv9z2OaAeoiKovTsx8iLJFRGHOg_5mQDuhKmWCYJDp3U9x9kdKKPt6IYWOG4wA/exec", {
       method: "POST",
-      mode: "no-cors",
       headers: {
         "Content-Type": "application/json"
       },
       body: JSON.stringify(data)
     });
 
-    alert("⑤送信OK");
-
+    alert("送信完了 👍");
     liff.closeWindow();
 
   } catch (e) {
