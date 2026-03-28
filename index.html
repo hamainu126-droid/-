@@ -87,7 +87,7 @@ let userId = "";
 // ===== 初期化 =====
 window.onload = async () => {
   try {
-    await liff.init({ liffId: "あなたのLIFF_ID" });
+    await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -131,7 +131,7 @@ async function sendData() {
 
   try {
     // ★ no-cors固定（必ず通す）
-    await fetch("GASのURL", {
+    await fetch("https://script.google.com/macros/s/AKfycbwjyrdulmaDizDQcA434HsC80ZKGxwHMmaUA0lrV_w4xRqePnOd0mLgjDwnJpaUfuU3NA/exec", {
       method: "POST",
       mode: "no-cors",
       body: JSON.stringify(data)
