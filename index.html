@@ -15,7 +15,6 @@ input, select, textarea {
   width: 100%;
   padding: 10px;
   margin-bottom: 15px;
-  font-size: 16px;
 }
 button {
   width: 100%;
@@ -23,7 +22,6 @@ button {
   background: #06C755;
   color: white;
   border: none;
-  font-size: 18px;
 }
 </style>
 </head>
@@ -32,105 +30,72 @@ button {
 
 <h2>作業日報</h2>
 
-日付：
 <input type="date" id="date">
-
-氏名：
 <input type="text" id="name">
 
-勤務区分：
 <select id="type">
   <option>昼勤</option>
   <option>夜勤</option>
   <option>休日</option>
 </select>
 
-開始時間：
 <input type="time" id="start">
-
-終了時間：
 <input type="time" id="end">
 
-作業内容：
-<textarea id="work"></textarea>
+<textarea id="work" placeholder="作業内容"></textarea>
+<textarea id="note" placeholder="連絡事項"></textarea>
 
-連絡事項：
-<textarea id="note"></textarea>
-
-<button id="sendBtn" onclick="sendData()">送信</button>
+<button onclick="sendData()">送信</button>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
 
-// ===== 初期処理 =====
 window.onload = async function () {
-  try {
-    await liff.init({ liffId: "2009609532-pYjsxOfo" });
+  await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-
-    const profile = await liff.getProfile();
-    userId = profile.userId;
-
-    // 名前自動入力
-    document.getElementById("name").value = profile.displayName;
-
-    // 今日の日付
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById("date").value = today;
-
-  } catch (e) {
-    alert("初期化エラー：" + e.message);
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
   }
+
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+
+  document.getElementById("name").value = profile.displayName;
+
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById("date").value = today;
 };
 
-// ===== 送信処理 =====
 async function sendData() {
-  try {
-    const btn = document.getElementById("sendBtn");
-
-    const data = {
-      date: document.getElementById("date").value,
-      name: document.getElementById("name").value,
-      type: document.getElementById("type").value,
-      start: document.getElementById("start").value,
-      end: document.getElementById("end").value,
-      work: document.getElementById("work").value,
-      note: document.getElementById("note").value,
-      userId: userId
-    };
-
-    // 入力チェック
-    if (!data.name || !data.start || !data.end) {
-      alert("必須項目を入力してください");
-      return;
-    }
-
-    if (!confirm("送信しますか？")) return;
-
-    // ボタンロック
-    btn.disabled = true;
-    btn.innerText = "送信中...";
-
-    const res = await fetch("https://script.google.com/macros/s/AKfycbzDGMi3fSxFuVWqhxB5N_JGVJw-oq7xq7C-twpJiH_m27ICXMzAcYF6pr33uHN-lok1KQ/exec", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    });
-
-    alert("送信完了 👍");
-    liff.closeWindow();
-
-  } catch (e) {
-    alert("エラー：" + e.message);
+  if (!userId) {
+    alert("LINE内で開いてください");
+    return;
   }
+
+  const data = {
+    date: document.getElementById("date").value,
+    name: document.getElementById("name").value,
+    type: document.getElementById("type").value,
+    start: document.getElementById("start").value,
+    end: document.getElementById("end").value,
+    work: document.getElementById("work").value,
+    note: document.getElementById("note").value,
+    userId: userId
+  };
+
+  await fetch("https://script.google.com/macros/s/AKfycbxaF6vIIYEt5NY5Vrp8dAKyznPc9Oa97OlbgdZLhEp-HyTS9LfbyvG5BLbc6UWJTXWZHA/exec", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
+
+  alert("送信完了");
+  liff.closeWindow();
 }
 </script>
 
