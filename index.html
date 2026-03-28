@@ -45,20 +45,30 @@ button {
 
     <h2>作業日報</h2>
 
-    <input type="date" id="date">
-    <input type="text" id="name">
+   <label>日付</label>
+<input type="date" id="date">
 
-    <select id="type">
-      <option>昼勤</option>
-      <option>夜勤</option>
-      <option>休日</option>
-    </select>
+<label>氏名</label>
+<input type="text" id="name">
 
-    <input type="time" id="start">
-    <input type="time" id="end">
+<label>勤務区分</label>
+<select id="type">
+  <option>昼勤</option>
+  <option>夜勤</option>
+  <option>休日</option>
+</select>
 
-    <textarea id="work"></textarea>
-    <textarea id="note"></textarea>
+<label>開始時間</label>
+<input type="time" id="start">
+
+<label>終了時間</label>
+<input type="time" id="end">
+
+<label>作業内容</label>
+<textarea id="work"></textarea>
+
+<label>連絡事項</label>
+<textarea id="note"></textarea>
 
     <button id="btn" onclick="sendData()">送信</button>
 
@@ -118,7 +128,7 @@ async function sendData() {
   status.innerText = "送信しています...";
 
   try {
-    const res = await fetch("https://script.google.com/macros/s/AKfycbzfbapKIQFLNB0hxHBfBl-Whd-S-_mJ_5xHTUgjHU7LJYDM7seT8gNUsYCmyA_E7AmKCw/exec", {
+    const res = await fetch("https://script.google.com/macros/s/AKfycbxWVqaPkNatjB7h5LBk-SeroN-q0wvUKo3p60B4Z3C3Sfhvmp4eBLlHT8OX3FY5VQILSw/exec", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
