@@ -116,7 +116,7 @@ let userId = "";
 // ===== 初期化 =====
 window.onload = async () => {
   try {
-    await liff.init({ liffId: "あなたのLIFF_ID" });
+    await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -170,7 +170,7 @@ async function sendData() {
   status.innerText = "送信しています...";
 
   try {
-    const res = await fetch("GASのURLをここに", {
+    const res = await fetch("https://script.google.com/macros/s/AKfycbxWVqaPkNatjB7h5LBk-SeroN-q0wvUKo3p60B4Z3C3Sfhvmp4eBLlHT8OX3FY5VQILSw/exec", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
