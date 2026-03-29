@@ -82,7 +82,7 @@ async function loadData() {
   try {
     console.log("④ loadData開始");
 
-    const res = await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=list&userId=${userId}`);
+    const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
 
     console.log("⑤ fetch成功");
 
@@ -122,14 +122,14 @@ async function loadData() {
 
 // ===== 承認 =====
 async function approve(row) {
-  await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=approve&row=${row}&userId=${userId}`);
+  await fetch(`${GAS_URL}?mode=approve&row=${row}&userId=${userId}`);
   alert("承認しました");
   loadData();
 }
 
 // ===== 差戻し =====
 async function reject(row) {
-  await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=reject&row=${row}&userId=${userId}`);
+  await fetch(`${GAS_URL}?mode=reject&row=${row}&userId=${userId}`);
   alert("差戻しました");
   loadData();
 }
