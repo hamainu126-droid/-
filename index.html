@@ -1,78 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>作業日報</title>
-
-<style>
-body {
-  font-family: -apple-system;
-  background: #f0f2f5;
-  margin: 0;
-}
-
-.container {
-  max-width: 500px;
-  margin: auto;
-  padding: 20px;
-}
-
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
-
-h2 {
-  text-align: center;
-}
-
-input, select, textarea {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-button {
-  width: 100%;
-  padding: 15px;
-  background: #06C755;
-  color: white;
-  border: none;
-  border-radius: 10px;
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-  <div class="card">
-
-    <h2>作業日報</h2>
-
-    <input type="date" id="date">
-    <input type="text" id="name" placeholder="名前">
-
-    <select id="type">
-      <option>昼勤</option>
-      <option>夜勤</option>
-      <option>休日</option>
-    </select>
-
-    <input type="time" id="start">
-    <input type="time" id="end">
-
-    <textarea id="work" placeholder="作業内容"></textarea>
-    <textarea id="note" placeholder="連絡事項"></textarea>
-
-    <button onclick="sendData()">送信</button>
-
-  </div>
-</div>
-
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
@@ -80,8 +5,9 @@ let userId = "";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbyFDNlt9ELbWXOCvCuY5LbWx3VAR8JQP88WfAeAOWUKFaZqk7nDPrTaYPOGVT1uZQ9QHg/exec";
 
 // ===== 初期化 =====
-window.onload = async () => {
+window.onload = async function() {
   try {
+
     await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
     if (!liff.isLoggedIn()) {
@@ -97,7 +23,7 @@ window.onload = async () => {
       new Date().toISOString().split('T')[0];
 
   } catch (e) {
-    alert("LIFFエラー：" + e.message);
+    alert("初期化エラー：" + e.message);
   }
 };
 
@@ -121,6 +47,7 @@ async function sendData() {
   };
 
   try {
+
     await fetch(GAS_URL, {
       method: "POST",
       mode: "no-cors",
@@ -129,7 +56,6 @@ async function sendData() {
 
     alert("送信しました 👍");
 
-    // 🔥 LINEなら閉じる
     if (liff.isInClient()) {
       liff.closeWindow();
     }
@@ -139,6 +65,3 @@ async function sendData() {
   }
 }
 </script>
-
-</body>
-</html>
