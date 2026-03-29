@@ -20,6 +20,7 @@ h2 {
   margin: 10px;
   padding: 15px;
   border-radius: 10px;
+  line-height: 1.6;
 }
 
 button {
@@ -45,17 +46,13 @@ button {
 <script>
 let userId = "";
 
-// ★ GASのURL（自分のにする）
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzxc5bYduWU4VsBtYE4TyV0M1eiqwvLR2OFdUOewMxeFEYyV8eHJABQVWl-0qqYvnbMrw/exec";
+// ★ GAS URL
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyFDNlt9ELbWXOCvCuY5LbWx3VAR8JQP88WfAeAOWUKFaZqk7nDPrTaYPOGVT1uZQ9QHg/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
   try {
-    console.log("① LIFF初期化開始");
-
     await liff.init({ liffId: "2009609532-iEXDl1k3" });
-
-    console.log("② LIFF初期化OK");
 
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -65,14 +62,10 @@ window.onload = async () => {
     const profile = await liff.getProfile();
     userId = profile.userId;
 
-    console.log("③ userId:", userId);
-    alert("userId: " + userId); // ←確認用（後で消してOK）
-
     loadData();
 
   } catch (e) {
     alert("初期化エラー：" + e.message);
-    console.log(e);
   }
 };
 
@@ -80,27 +73,19 @@ window.onload = async () => {
 async function loadData() {
 
   try {
-    console.log("④ loadData開始");
 
     const url = GAS_URL + "?mode=list&userId=" + userId;
-    console.log("URL:", url);
 
     const res = await fetch(url);
-
-    console.log("⑤ fetch成功");
-
     const text = await res.text();
-    console.log("⑥ 生データ:", text);
 
     let json;
     try {
       json = JSON.parse(text);
-    } catch (err) {
-      document.getElementById("list").innerHTML = "JSONエラー";
+    } catch (e) {
+      document.getElementById("list").innerHTML = "データ取得エラー";
       return;
     }
-
-    console.log("⑦ JSON:", json);
 
     if (json.status !== "OK") {
       document.getElementById("list").innerHTML = "権限なし";
@@ -109,31 +94,30 @@ async function loadData() {
 
     let html = "";
 
-   json.data.forEach(d => {
-  html += `
-    <div class="card">
-      <b>${d.name}</b><br>
+    json.data.forEach(d => {
 
-      🕒 ${d.timestamp}<br>
-      📅 ${d.date}<br>
-      ⏰ ${d.start}〜${d.end}<br>
+      html += "<div class='card'>" +
 
-      📝 作業：${d.work}<br>
-      📩 連絡：${d.note || "なし"}<br>
+        "<b>" + (d.name || "") + "</b><br>" +
 
-      状態：${d.status || "未承認"}<br>
+        "🕒 " + (d.timestamp || "") + "<br>" +
+        "📅 " + (d.date || "") + "<br>" +
+        "⏰ " + (d.start || "") + "〜" + (d.end || "") + "<br><br>" +
 
-      <button class="ok" onclick="approve(${d.row})">承認</button>
-      <button class="ng" onclick="reject(${d.row})">差戻し</button>
-    </div>
-  `;
-});
-  
+        "📝 作業：" + (d.work || "") + "<br>" +
+        "📩 連絡：" + (d.note || "なし") + "<br><br>" +
+
+        "状態：" + (d.status || "未承認") + "<br>" +
+
+        "<button class='ok' onclick='approve(" + d.row + ")'>承認</button>" +
+        "<button class='ng' onclick='reject(" + d.row + ")'>差戻し</button>" +
+
+      "</div>";
+    });
 
     document.getElementById("list").innerHTML = html;
 
   } catch (e) {
-    console.log("❌ エラー:", e);
     document.getElementById("list").innerHTML = "通信エラー";
   }
 }
