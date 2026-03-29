@@ -93,6 +93,21 @@ async function reject(row) {
   alert("差戻しました");
   loadData();
 }
+async function loadData() {
+
+  console.log("①開始");
+
+  const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
+
+  console.log("②fetch成功");
+
+  const text = await res.text();
+  console.log("③生データ:", text);
+
+  const json = JSON.parse(text);
+  console.log("④JSON:", json);
+
+}  
 </script>
 
 </body>
