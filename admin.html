@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>管理画面</title>
+
+<style>
+body { font-family:sans-serif; background:#f5f5f5; }
+.card {
+  background:white;
+  margin:10px;
+  padding:15px;
+  border-radius:10px;
+}
+.btn {
+  padding:8px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  color:white;
+}
+.ok { background:#06C755; }
+.ng { background:#ff4444; }
+</style>
+</head>
+
+<body>
+
+<h2>日報管理</h2>
+<div id="list"></div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<script>
+let userId = "";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec";
+
+// ===== 初期化 =====
+window.onload = async () => {
+  await liff.init({ liffId: "LIFF管理画面用ID" });
+
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
+
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+
+  loadData();
+};
+
+// ===== 一覧取得 =====
+async function loadData() {
+
+  const res = await fetch(https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec+ "?mode=list&userId=" + userId);
+  const json = await res.json();
+
+  if (json.status !== "OK") {
+    document.body.innerHTML = "権限なし";
+    return;
+  }
+
+  let html = "";
+
+  json.data.forEach(d => {
+    html += `
+      <div class="card">
+        <b>${d.name}</b> (${d.date})<br>
+        ${d.work}<br>
+        状態：${d.status}<br>
+
+        <button class="btn ok" onclick="approve(${d.row})">承認</button>
+        <button class="btn ng" onclick="reject(${d.row})">差戻し</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("list").innerHTML = html;
+}
+
+// ===== 承認 =====
+async function approve(row) {
+  await fetch(https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec + "?mode=approve&row=" + row + "&userId=" + userId);
+  alert("承認しました");
+  loadData();
+}
+
+// ===== 差戻し =====
+async function reject(row) {
+  await fetch(https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec + "?mode=reject&row=" + row + "&userId=" + userId);
+  alert("差戻しました");
+  loadData();
+}
+</script>
+
+</body>
+</html>
