@@ -1,3 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>作業日報</title>
+
+<style>
+body {
+  font-family: -apple-system;
+  background: #f0f2f5;
+  margin: 0;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+}
+
+h2 {
+  text-align: center;
+}
+
+input, select, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+button {
+  width: 100%;
+  padding: 15px;
+  background: #06C755;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <div class="card">
+
+    <h2>作業日報</h2>
+
+    <label>日付</label>
+    <input type="date" id="date">
+
+    <label>氏名</label>
+    <input type="text" id="name">
+
+    <label>勤務区分</label>
+    <select id="type">
+      <option>昼勤</option>
+      <option>夜勤</option>
+      <option>休日</option>
+    </select>
+
+    <label>開始時間</label>
+    <input type="time" id="start">
+
+    <label>終了時間</label>
+    <input type="time" id="end">
+
+    <label>作業内容</label>
+    <textarea id="work"></textarea>
+
+    <label>連絡事項</label>
+    <textarea id="note"></textarea>
+
+    <button onclick="sendData()">送信</button>
+
+  </div>
+</div>
+
+<!-- LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
@@ -18,9 +104,14 @@ window.onload = async function() {
     const profile = await liff.getProfile();
     userId = profile.userId;
 
-    document.getElementById("name").value = profile.displayName;
-    document.getElementById("date").value =
-      new Date().toISOString().split('T')[0];
+    // 安全代入（エラー防止）
+    const nameEl = document.getElementById("name");
+    const dateEl = document.getElementById("date");
+
+    if (nameEl) nameEl.value = profile.displayName;
+    if (dateEl) {
+      dateEl.value = new Date().toISOString().split('T')[0];
+    }
 
   } catch (e) {
     alert("初期化エラー：" + e.message);
@@ -65,3 +156,6 @@ async function sendData() {
   }
 }
 </script>
+
+</body>
+</html>
