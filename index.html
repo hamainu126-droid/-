@@ -20,9 +20,7 @@ body {
   padding: 20px;
   border-radius: 12px;
 }
-h2 {
-  text-align: center;
-}
+h2 { text-align: center; }
 input, select, textarea {
   width: 100%;
   padding: 10px;
@@ -78,6 +76,7 @@ button {
   </div>
 </div>
 
+<!-- LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
@@ -86,8 +85,8 @@ const GAS_URL = "https://script.google.com/macros/s/AKfycbytqQDcwbSW2SpO2T3DyB0T
 
 // ===== 初期化 =====
 window.onload = async function() {
-  try {
 
+  try {
     await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
     if (!liff.isLoggedIn()) {
@@ -107,6 +106,7 @@ window.onload = async function() {
   }
 };
 
+
 // ===== 送信 =====
 async function sendData() {
 
@@ -115,8 +115,12 @@ async function sendData() {
     return;
   }
 
+  const btn = document.querySelector("button");
+  btn.disabled = true;
+  btn.innerText = "送信中...";
+
   const data = {
-    mode: "save", // ← 重要
+    mode: "save", // ← 超重要
     date: document.getElementById("date").value,
     name: document.getElementById("name").value,
     type: document.getElementById("type").value,
@@ -129,7 +133,8 @@ async function sendData() {
 
   try {
 
-    const res = await fetch(GAS_URL, {
+    // 🚀 非同期で送信（待たない）
+    fetch(GAS_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -137,17 +142,17 @@ async function sendData() {
       body: JSON.stringify(data)
     });
 
-    const result = await res.json();
-
-    if (result.status === "OK") {
-      alert("送信完了 👍");
+    // UX優先で即閉じる
+    alert("送信しました 👍");
+    
+    if (liff.isInClient()) {
       liff.closeWindow();
-    } else {
-      alert("エラー：" + result.message);
     }
 
   } catch (e) {
-    alert("通信エラー：" + e.message);
+    alert("送信エラー：" + e.message);
+    btn.disabled = false;
+    btn.innerText = "送信";
   }
 }
 </script>
