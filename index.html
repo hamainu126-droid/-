@@ -40,6 +40,8 @@ button {
     <input type="time" id="start">
     <input type="time" id="end">
 
+    <label>現場名</label>
+　　<input type="text" id="site">
     <textarea id="work" placeholder="作業内容"></textarea>
     <textarea id="note" placeholder="連絡事項"></textarea>
 
@@ -52,7 +54,7 @@ button {
 
 <script>
 let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwKbIcCCX5JTtPzy-qQaIsQ5tLAdbkGVemTmg_APUtEwN-boVIhnmYeaAGTrO5F1kT9mw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxJwKOao0AHKm8fmrsG_3-VbRVz58pgrTZygFccUOYwNPuw6I7glVz4SdKuOwKc2C_76Q/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
@@ -87,6 +89,7 @@ function sendData() {
     type: document.getElementById("type").value,
     start: document.getElementById("start").value,
     end: document.getElementById("end").value,
+    site: document.getElementById("site").value, // ← 追加
     work: document.getElementById("work").value,
     note: document.getElementById("note").value,
     userId: userId
