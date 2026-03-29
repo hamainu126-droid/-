@@ -141,7 +141,7 @@ async function loadData() {
 
 // ===== 承認 =====
 async function approve(row) {
-  await fetch(`${GAS_URL}?mode=approve&row=${row}&userId=${userId}`);
+  await fetch(`${GAS_URL}?mode=reject&row=${row}&userId=${userId}`);
   alert("承認しました");
   loadData();
 }
