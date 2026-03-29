@@ -8,13 +8,23 @@
 body { font-family:-apple-system; background:#f0f2f5; margin:0; }
 .header { background:#06C755; color:white; padding:15px; text-align:center; }
 .filter { padding:10px; background:white; }
-input { width:100%; padding:10px; margin-bottom:8px; border-radius:8px; border:1px solid #ccc; }
-.card { background:white; margin:10px; padding:15px; border-radius:12px; }
+input {
+  width:100%; padding:10px; margin-bottom:8px;
+  border-radius:8px; border:1px solid #ccc;
+}
+.card {
+  background:white; margin:10px;
+  padding:15px; border-radius:12px;
+}
 .status { padding:4px 8px; border-radius:20px; font-size:12px; }
 .approved { background:#e6f9ed; color:#00a651; }
 .pending { background:#fff4e5; color:#ff9800; }
 .rejected { background:#ffe5e5; color:#e53935; }
-button { width:48%; padding:10px; border:none; border-radius:10px; color:white; }
+button {
+  width:48%; padding:10px;
+  border:none; border-radius:10px;
+  color:white;
+}
 .ok { background:#06C755; }
 .ng { background:#ff4444; }
 </style>
@@ -37,7 +47,7 @@ button { width:48%; padding:10px; border:none; border-radius:10px; color:white; 
 let userId = "";
 let allData = [];
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbytqQDcwbSW2SpO2T3DyB0Ttsunxv-swHc0eCDGxPoTlBODk63dpXJPBbnfQJpl-Qtd3g/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz4JO9zAVckQmGypdiVKpnrkBLBgVCAAx-_JCHRZjyivPzvl-bEbg3gE8Q4O0mKeurV-Q/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
@@ -127,8 +137,11 @@ function render() {
 async function approve(row) {
   await fetch(GAS_URL, {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ mode:"approve", row, userId })
+    body: JSON.stringify({
+      mode: "approve",
+      row: row,
+      userId: userId
+    })
   });
   loadData();
 }
@@ -138,8 +151,11 @@ async function approve(row) {
 async function reject(row) {
   await fetch(GAS_URL, {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ mode:"reject", row, userId })
+    body: JSON.stringify({
+      mode: "reject",
+      row: row,
+      userId: userId
+    })
   });
   loadData();
 }
