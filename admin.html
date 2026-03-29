@@ -5,60 +5,16 @@
 <title>日報管理</title>
 
 <style>
-body {
-  font-family: -apple-system;
-  background: #f0f2f5;
-  margin: 0;
-}
-
-/* ヘッダー */
-.header {
-  background: #06C755;
-  color: white;
-  padding: 15px;
-  text-align: center;
-}
-
-/* フィルタ */
-.filter {
-  padding: 10px;
-  background: white;
-}
-
-input, select {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-}
-
-/* カード */
-.card {
-  background: white;
-  margin: 10px;
-  padding: 15px;
-  border-radius: 12px;
-}
-
-.status {
-  padding: 4px 8px;
-  border-radius: 20px;
-  font-size: 12px;
-}
-
+body { font-family:-apple-system; background:#f0f2f5; margin:0; }
+.header { background:#06C755; color:white; padding:15px; text-align:center; }
+.filter { padding:10px; background:white; }
+input { width:100%; padding:10px; margin-bottom:8px; border-radius:8px; border:1px solid #ccc; }
+.card { background:white; margin:10px; padding:15px; border-radius:12px; }
+.status { padding:4px 8px; border-radius:20px; font-size:12px; }
 .approved { background:#e6f9ed; color:#00a651; }
 .pending { background:#fff4e5; color:#ff9800; }
 .rejected { background:#ffe5e5; color:#e53935; }
-
-button {
-  width: 48%;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  color: white;
-}
-
+button { width:48%; padding:10px; border:none; border-radius:10px; color:white; }
 .ok { background:#06C755; }
 .ng { background:#ff4444; }
 </style>
@@ -81,10 +37,11 @@ button {
 let userId = "";
 let allData = [];
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwH6tWZzdP6ZhtrSdhU1sghlSs7NNMKcfA9qfQ6K1BWOP0QQthX96j4ckSp6ZFOz11yvg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbytqQDcwbSW2SpO2T3DyB0Ttsunxv-swHc0eCDGxPoTlBODk63dpXJPBbnfQJpl-Qtd3g/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
+
   await liff.init({ liffId: "2009609532-iEXDl1k3" });
 
   if (!liff.isLoggedIn()) {
@@ -97,15 +54,15 @@ window.onload = async () => {
 
   loadData();
 
-  // 🔥 入力時に再描画
   document.getElementById("searchName").addEventListener("input", render);
   document.getElementById("searchMonth").addEventListener("input", render);
 };
 
+
 // ===== データ取得 =====
 async function loadData() {
 
-  const res = await fetch(GAS_URL + "?mode=list&userId=" + userId);
+  const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
   const json = await res.json();
 
   if (json.status !== "OK") {
@@ -114,9 +71,9 @@ async function loadData() {
   }
 
   allData = json.data;
-
   render();
 }
+
 
 // ===== 表示 =====
 function render() {
@@ -126,17 +83,14 @@ function render() {
 
   let data = allData;
 
-  // 🔍 名前検索
   if (name) {
     data = data.filter(d => (d.name || "").toLowerCase().includes(name));
   }
 
-  // 📅 月フィルタ
   if (month) {
     data = data.filter(d => (d.date || "").startsWith(month));
   }
 
-  // 🕒 日付順（新しい順）
   data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
   let html = "";
@@ -152,7 +106,6 @@ function render() {
         <b>${d.name}</b><br>
         ${d.timestamp}<br>
         ${d.start}〜${d.end}<br>
-
         📝 ${d.work}<br>
         📩 ${d.note || "なし"}<br>
 
@@ -169,17 +122,28 @@ function render() {
   document.getElementById("list").innerHTML = html || "データなし";
 }
 
+
 // ===== 承認 =====
 async function approve(row) {
-  await fetch(GAS_URL + "?mode=approve&row=" + row + "&userId=" + userId);
+  await fetch(GAS_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ mode:"approve", row, userId })
+  });
   loadData();
 }
 
+
 // ===== 差戻し =====
 async function reject(row) {
-  await fetch(GAS_URL + "?mode=reject&row=" + row + "&userId=" + userId);
+  await fetch(GAS_URL, {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ mode:"reject", row, userId })
+  });
   loadData();
 }
+
 </script>
 
 </body>
