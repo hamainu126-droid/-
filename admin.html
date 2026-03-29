@@ -47,6 +47,7 @@ window.onload = async () => {
   const profile = await liff.getProfile();
   userId = profile.userId;
 
+   console.log("userId:", userId);
   loadData();
 };
 
