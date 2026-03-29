@@ -55,7 +55,7 @@ window.onload = async () => {
 async function loadData() {
 
   const res = await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=list&userId=${userId}`);
-  const text = await res.text();
+  const json = await res.json();
 console.log("レスポンス:", text);
   if (json.status !== "OK") {
     document.body.innerHTML = "権限なし";
