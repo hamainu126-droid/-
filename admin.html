@@ -33,7 +33,7 @@ body { font-family:sans-serif; background:#f5f5f5; }
 
 <script>
 let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec";
+const GAS_URL = "GASのURL";
 
 // ===== 初期化 =====
 window.onload = async () => {
@@ -53,7 +53,7 @@ window.onload = async () => {
 // ===== 一覧取得 =====
 async function loadData() {
 
-  const res = await fetch(https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec+ "?mode=list&userId=" + userId);
+  const res = await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=list&userId=${userId}`);
   const json = await res.json();
 
   if (json.status !== "OK") {
@@ -81,14 +81,14 @@ async function loadData() {
 
 // ===== 承認 =====
 async function approve(row) {
-  await fetch(https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec + "?mode=approve&row=" + row + "&userId=" + userId);
+  await fetch("https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec?mode=approve&row=" + row + "&userId=" + userId);
   alert("承認しました");
   loadData();
 }
 
 // ===== 差戻し =====
 async function reject(row) {
-  await fetch(https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec + "?mode=reject&row=" + row + "&userId=" + userId);
+  await fetch("https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec" + "?mode=reject&row=" + row + "&userId=" + userId);
   alert("差戻しました");
   loadData();
 }
