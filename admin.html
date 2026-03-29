@@ -47,7 +47,7 @@ button {
 let userId = "";
 let allData = [];
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz4JO9zAVckQmGypdiVKpnrkBLBgVCAAx-_JCHRZjyivPzvl-bEbg3gE8Q4O0mKeurV-Q/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwKbIcCCX5JTtPzy-qQaIsQ5tLAdbkGVemTmg_APUtEwN-boVIhnmYeaAGTrO5F1kT9mw/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
@@ -115,7 +115,7 @@ function render() {
       <div class="card">
         <b>${d.name}</b><br>
         ${d.timestamp}<br>
-        ${d.start}〜${d.end}<br>
+        ${d.date} ${d.start}〜${d.end}<br>
         📝 ${d.work}<br>
         📩 ${d.note || "なし"}<br>
 
