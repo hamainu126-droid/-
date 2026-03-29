@@ -6,136 +6,180 @@
 
 <style>
 body {
-  font-family: sans-serif;
-  background: #f5f5f5;
+  font-family: -apple-system;
+  background: #f0f2f5;
   margin: 0;
 }
 
-h2 {
+/* ヘッダー */
+.header {
+  background: #06C755;
+  color: white;
+  padding: 15px;
   text-align: center;
 }
 
+/* フィルタ */
+.filter {
+  padding: 10px;
+  background: white;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+/* カード */
 .card {
   background: white;
   margin: 10px;
   padding: 15px;
-  border-radius: 10px;
-  line-height: 1.6;
+  border-radius: 12px;
 }
 
+.status {
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.approved { background:#e6f9ed; color:#00a651; }
+.pending { background:#fff4e5; color:#ff9800; }
+.rejected { background:#ffe5e5; color:#e53935; }
+
 button {
-  padding: 8px;
-  margin: 5px;
+  width: 48%;
+  padding: 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: white;
 }
 
-.ok { background: #06C755; }
-.ng { background: #ff4444; }
+.ok { background:#06C755; }
+.ng { background:#ff4444; }
 </style>
 </head>
 
 <body>
 
-<h2>日報管理</h2>
+<div class="header">📋 日報管理</div>
+
+<div class="filter">
+  <input type="text" id="searchName" placeholder="名前検索">
+  <input type="month" id="searchMonth">
+</div>
+
 <div id="list">読み込み中...</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
+let allData = [];
 
-// ★ GAS URL
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyFDNlt9ELbWXOCvCuY5LbWx3VAR8JQP88WfAeAOWUKFaZqk7nDPrTaYPOGVT1uZQ9QHg/exec";
+const GAS_URL = "あなたのGAS_URL";
 
 // ===== 初期化 =====
 window.onload = async () => {
-  try {
-    await liff.init({ liffId: "2009609532-iEXDl1k3" });
+  await liff.init({ liffId: "あなたのLIFF_ID" });
 
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-
-    const profile = await liff.getProfile();
-    userId = profile.userId;
-
-    loadData();
-
-  } catch (e) {
-    alert("初期化エラー：" + e.message);
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
   }
+
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+
+  loadData();
+
+  // 🔥 入力時に再描画
+  document.getElementById("searchName").addEventListener("input", render);
+  document.getElementById("searchMonth").addEventListener("input", render);
 };
 
 // ===== データ取得 =====
 async function loadData() {
 
-  try {
+  const res = await fetch(GAS_URL + "?mode=list&userId=" + userId);
+  const json = await res.json();
 
-    const url = GAS_URL + "?mode=list&userId=" + userId;
-
-    const res = await fetch(url);
-    const text = await res.text();
-
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch (e) {
-      document.getElementById("list").innerHTML = "データ取得エラー";
-      return;
-    }
-
-    if (json.status !== "OK") {
-      document.getElementById("list").innerHTML = "権限なし";
-      return;
-    }
-
-    let html = "";
-
-    json.data.forEach(d => {
-
-      html += "<div class='card'>" +
-
-        "<b>" + (d.name || "") + "</b><br>" +
-
-        "🕒 " + (d.timestamp || "") + "<br>" +
-        "📅 " + (d.date || "") + "<br>" +
-        "⏰ " + (d.start || "") + "〜" + (d.end || "") + "<br><br>" +
-
-        "📝 作業：" + (d.work || "") + "<br>" +
-        "📩 連絡：" + (d.note || "なし") + "<br><br>" +
-
-        "状態：" + (d.status || "未承認") + "<br>" +
-
-        "<button class='ok' onclick='approve(" + d.row + ")'>承認</button>" +
-        "<button class='ng' onclick='reject(" + d.row + ")'>差戻し</button>" +
-
-      "</div>";
-    });
-
-    document.getElementById("list").innerHTML = html;
-
-  } catch (e) {
-    document.getElementById("list").innerHTML = "通信エラー";
+  if (json.status !== "OK") {
+    document.getElementById("list").innerHTML = "権限なし";
+    return;
   }
+
+  allData = json.data;
+
+  render();
+}
+
+// ===== 表示 =====
+function render() {
+
+  const name = document.getElementById("searchName").value.toLowerCase();
+  const month = document.getElementById("searchMonth").value;
+
+  let data = allData;
+
+  // 🔍 名前検索
+  if (name) {
+    data = data.filter(d => (d.name || "").toLowerCase().includes(name));
+  }
+
+  // 📅 月フィルタ
+  if (month) {
+    data = data.filter(d => (d.date || "").startsWith(month));
+  }
+
+  // 🕒 日付順（新しい順）
+  data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  let html = "";
+
+  data.forEach(d => {
+
+    let statusClass = "pending";
+    if (d.status === "承認") statusClass = "approved";
+    if (d.status === "差戻し") statusClass = "rejected";
+
+    html += `
+      <div class="card">
+        <b>${d.name}</b><br>
+        ${d.timestamp}<br>
+        ${d.start}〜${d.end}<br>
+
+        📝 ${d.work}<br>
+        📩 ${d.note || "なし"}<br>
+
+        <div class="status ${statusClass}">
+          ${d.status || "未承認"}
+        </div>
+
+        <button class="ok" onclick="approve(${d.row})">承認</button>
+        <button class="ng" onclick="reject(${d.row})">差戻し</button>
+      </div>
+    `;
+  });
+
+  document.getElementById("list").innerHTML = html || "データなし";
 }
 
 // ===== 承認 =====
 async function approve(row) {
   await fetch(GAS_URL + "?mode=approve&row=" + row + "&userId=" + userId);
-  alert("承認しました");
   loadData();
 }
 
 // ===== 差戻し =====
 async function reject(row) {
   await fetch(GAS_URL + "?mode=reject&row=" + row + "&userId=" + userId);
-  alert("差戻しました");
   loadData();
 }
-
 </script>
 
 </body>
