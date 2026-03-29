@@ -5,36 +5,18 @@
 <title>作業日報</title>
 
 <style>
-body {
-  font-family: -apple-system;
-  background: #f0f2f5;
-  margin: 0;
-}
-.container {
-  max-width: 500px;
-  margin: auto;
-  padding: 20px;
-}
-.card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-}
-h2 { text-align: center; }
+body { font-family:-apple-system; background:#f0f2f5; margin:0; }
+.container { max-width:500px; margin:auto; padding:20px; }
+.card { background:white; padding:20px; border-radius:12px; }
+h2 { text-align:center; }
 input, select, textarea {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  width:100%; padding:10px; margin-bottom:12px;
+  border-radius:8px; border:1px solid #ccc;
 }
 button {
-  width: 100%;
-  padding: 15px;
-  background: #06C755;
-  color: white;
-  border: none;
-  border-radius: 10px;
+  width:100%; padding:15px;
+  background:#06C755; color:white;
+  border:none; border-radius:10px;
 }
 </style>
 </head>
@@ -46,81 +28,60 @@ button {
 
     <h2>作業日報</h2>
 
-    <label>日付</label>
     <input type="date" id="date">
+    <input type="text" id="name" placeholder="氏名">
 
-    <label>氏名</label>
-    <input type="text" id="name">
-
-    <label>勤務区分</label>
     <select id="type">
       <option>昼勤</option>
       <option>夜勤</option>
       <option>休日</option>
     </select>
 
-    <label>開始時間</label>
     <input type="time" id="start">
-
-    <label>終了時間</label>
     <input type="time" id="end">
 
-    <label>作業内容</label>
-    <textarea id="work"></textarea>
-
-    <label>連絡事項</label>
-    <textarea id="note"></textarea>
+    <textarea id="work" placeholder="作業内容"></textarea>
+    <textarea id="note" placeholder="連絡事項"></textarea>
 
     <button onclick="sendData()">送信</button>
 
   </div>
 </div>
 
-<!-- LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbytqQDcwbSW2SpO2T3DyB0Ttsunxv-swHc0eCDGxPoTlBODk63dpXJPBbnfQJpl-Qtd3g/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz4JO9zAVckQmGypdiVKpnrkBLBgVCAAx-_JCHRZjyivPzvl-bEbg3gE8Q4O0mKeurV-Q/exec";
 
 // ===== 初期化 =====
-window.onload = async function() {
+window.onload = async () => {
 
-  try {
-    await liff.init({ liffId: "2009609532-pYjsxOfo" });
+  await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-
-    const profile = await liff.getProfile();
-    userId = profile.userId;
-
-    document.getElementById("name").value = profile.displayName;
-    document.getElementById("date").value =
-      new Date().toISOString().split('T')[0];
-
-  } catch (e) {
-    alert("初期化エラー：" + e.message);
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
   }
+
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+
+  document.getElementById("name").value = profile.displayName;
+  document.getElementById("date").value =
+    new Date().toISOString().split('T')[0];
 };
 
 
 // ===== 送信 =====
-async function sendData() {
-
-  if (!userId) {
-    alert("LINE内で開いてください");
-    return;
-  }
+function sendData() {
 
   const btn = document.querySelector("button");
   btn.disabled = true;
   btn.innerText = "送信中...";
 
   const data = {
-    mode: "save", // ← 超重要
+    mode: "save",
     date: document.getElementById("date").value,
     name: document.getElementById("name").value,
     type: document.getElementById("type").value,
@@ -131,31 +92,20 @@ async function sendData() {
     userId: userId
   };
 
-  try {
+  // ✅ CORS回避（ヘッダーなし）
+  fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
 
-    // 🚀 非同期で送信（待たない）
-    fetch(GAS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(data)
-    });
+  alert("送信しました 👍");
 
-    // UX優先で即閉じる
-    alert("送信しました 👍");
-    
-    if (liff.isInClient()) {
-      liff.closeWindow();
-    }
-
-  } catch (e) {
-    alert("送信エラー：" + e.message);
-    btn.disabled = false;
-    btn.innerText = "送信";
+  if (liff.isInClient()) {
+    liff.closeWindow();
   }
 }
 </script>
 
 </body>
 </html>
+  
