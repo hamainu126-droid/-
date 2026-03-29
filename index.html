@@ -10,23 +10,19 @@ body {
   background: #f0f2f5;
   margin: 0;
 }
-
 .container {
   max-width: 500px;
   margin: auto;
   padding: 20px;
 }
-
 .card {
   background: white;
   padding: 20px;
   border-radius: 12px;
 }
-
 h2 {
   text-align: center;
 }
-
 input, select, textarea {
   width: 100%;
   padding: 10px;
@@ -34,7 +30,6 @@ input, select, textarea {
   border-radius: 8px;
   border: 1px solid #ccc;
 }
-
 button {
   width: 100%;
   padding: 15px;
@@ -83,12 +78,11 @@ button {
   </div>
 </div>
 
-<!-- LIFF SDK -->
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwH6tWZzdP6ZhtrSdhU1sghlSs7NNMKcfA9qfQ6K1BWOP0QQthX96j4ckSp6ZFOz11yvg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbytqQDcwbSW2SpO2T3DyB0Ttsunxv-swHc0eCDGxPoTlBODk63dpXJPBbnfQJpl-Qtd3g/exec";
 
 // ===== 初期化 =====
 window.onload = async function() {
@@ -104,14 +98,9 @@ window.onload = async function() {
     const profile = await liff.getProfile();
     userId = profile.userId;
 
-    // 安全代入（エラー防止）
-    const nameEl = document.getElementById("name");
-    const dateEl = document.getElementById("date");
-
-    if (nameEl) nameEl.value = profile.displayName;
-    if (dateEl) {
-      dateEl.value = new Date().toISOString().split('T')[0];
-    }
+    document.getElementById("name").value = profile.displayName;
+    document.getElementById("date").value =
+      new Date().toISOString().split('T')[0];
 
   } catch (e) {
     alert("初期化エラー：" + e.message);
@@ -127,6 +116,7 @@ async function sendData() {
   }
 
   const data = {
+    mode: "save", // ← 重要
     date: document.getElementById("date").value,
     name: document.getElementById("name").value,
     type: document.getElementById("type").value,
@@ -139,20 +129,25 @@ async function sendData() {
 
   try {
 
-    await fetch(GAS_URL, {
+    const res = await fetch(GAS_URL, {
       method: "POST",
-      mode: "no-cors",
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify(data)
     });
 
-    alert("送信しました 👍");
+    const result = await res.json();
 
-    if (liff.isInClient()) {
+    if (result.status === "OK") {
+      alert("送信完了 👍");
       liff.closeWindow();
+    } else {
+      alert("エラー：" + result.message);
     }
 
   } catch (e) {
-    alert("送信実行（結果不明）");
+    alert("通信エラー：" + e.message);
   }
 }
 </script>
