@@ -138,12 +138,16 @@ async function sendData() {
     });
 
     alert("送信しました 👍");
-    liff.closeWindow();
+    setTimeout(() => {
+　　  liff.closeWindow();
+　　}, 500);
 
   } catch (e) {
     // ★ エラーでも送信扱い
     alert("送信実行（結果不明）");
-    liff.closeWindow();
+    setTimeout(() => {
+ 　　 liff.closeWindow();
+　　}, 500);
   }
 }
 </script>
