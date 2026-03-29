@@ -109,16 +109,25 @@ async function loadData() {
 
     let html = "";
 
-    json.data.forEach(d => {
-      html += `
-        <div class="card">
-          <b>${d.name}</b> (${d.date})<br>
-          ${d.work}<br>
-          状態：${d.status || "未承認"}<br>
+   json.data.forEach(d => {
+  html += `
+    <div class="card">
+      <b>${d.name}</b><br>
 
-          <button class="ok" onclick="approve(${d.row})">承認</button>
-          <button class="ng" onclick="reject(${d.row})">差戻し</button>
-        </div>
+      🕒 ${d.timestamp}<br>
+      📅 ${d.date}<br>
+      ⏰ ${d.start}〜${d.end}<br>
+
+      📝 作業：${d.work}<br>
+      📩 連絡：${d.note || "なし"}<br>
+
+      状態：${d.status || "未承認"}<br>
+
+      <button class="ok" onclick="approve(${d.row})">承認</button>
+      <button class="ng" onclick="reject(${d.row})">差戻し</button>
+    </div>
+  `;
+});
       `;
     });
 
