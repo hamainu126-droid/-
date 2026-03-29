@@ -2,112 +2,138 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>管理画面</title>
+<title>日報管理</title>
 
 <style>
-body { font-family:sans-serif; background:#f5f5f5; }
+body {
+  font-family: sans-serif;
+  background: #f5f5f5;
+  margin: 0;
+}
+
+h2 {
+  text-align: center;
+}
+
 .card {
-  background:white;
-  margin:10px;
-  padding:15px;
-  border-radius:10px;
+  background: white;
+  margin: 10px;
+  padding: 15px;
+  border-radius: 10px;
 }
-.btn {
-  padding:8px;
-  margin:5px;
-  border:none;
-  border-radius:8px;
-  color:white;
+
+button {
+  padding: 8px;
+  margin: 5px;
+  border: none;
+  border-radius: 8px;
+  color: white;
 }
-.ok { background:#06C755; }
-.ng { background:#ff4444; }
+
+.ok { background: #06C755; }
+.ng { background: #ff4444; }
 </style>
 </head>
 
 <body>
 
 <h2>日報管理</h2>
-<div id="list"></div>
+<div id="list">読み込み中...</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
+
+// ★ GASのURL（ここ変える）
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
-  await liff.init({ liffId: "2009609532-iEXDl1k3" });
+  try {
+    console.log("① LIFF初期化開始");
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
+    await liff.init({ liffId: "2009609532-iEXDl1k3" });
+
+    console.log("② LIFF初期化OK");
+
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+
+    console.log("③ userId:", userId);
+    alert("userId: " + userId); // ←確認用（あとで消してOK）
+
+    loadData();
+
+  } catch (e) {
+    alert("初期化エラー：" + e.message);
+    console.log(e);
   }
-
-  const profile = await liff.getProfile();
-  userId = profile.userId;
-
-   console.log("userId:", userId);
-  loadData();
 };
 
-// ===== 一覧取得 =====
+// ===== データ取得 =====
 async function loadData() {
 
-  const res = await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=list&userId=${userId}`);
-  const json = await res.json();
-console.log("レスポンス:", text);
-  if (json.status !== "OK") {
-    document.body.innerHTML = "権限なし";
-    return;
+  try {
+    console.log("④ loadData開始");
+
+    const res = await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=list&userId=${userId}`);
+
+    console.log("⑤ fetch成功");
+
+    const text = await res.text();
+    console.log("⑥ 生データ:", text);
+
+    const json = JSON.parse(text);
+    console.log("⑦ JSON:", json);
+
+    if (json.status !== "OK") {
+      document.getElementById("list").innerHTML = "権限なし";
+      return;
+    }
+
+    let html = "";
+
+    json.data.forEach(d => {
+      html += `
+        <div class="card">
+          <b>${d.name}</b> (${d.date})<br>
+          ${d.work}<br>
+          状態：${d.status}<br>
+
+          <button class="ok" onclick="approve(${d.row})">承認</button>
+          <button class="ng" onclick="reject(${d.row})">差戻し</button>
+        </div>
+      `;
+    });
+
+    document.getElementById("list").innerHTML = html;
+
+  } catch (e) {
+    alert("データ取得エラー：" + e.message);
+    console.log(e);
   }
-
-  let html = "";
-
-  json.data.forEach(d => {
-    html += `
-      <div class="card">
-        <b>${d.name}</b> (${d.date})<br>
-        ${d.work}<br>
-        状態：${d.status}<br>
-
-        <button class="btn ok" onclick="approve(${d.row})">承認</button>
-        <button class="btn ng" onclick="reject(${d.row})">差戻し</button>
-      </div>
-    `;
-  });
-
-  document.getElementById("list").innerHTML = html;
 }
 
 // ===== 承認 =====
 async function approve(row) {
-  await fetch("https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec?mode=approve&row=" + row + "&userId=" + userId);
+  await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=approve&row=${row}&userId=${userId}`);
   alert("承認しました");
   loadData();
 }
 
 // ===== 差戻し =====
 async function reject(row) {
-  await fetch("https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec" + "?mode=reject&row=" + row + "&userId=" + userId);
+  await fetch(`${https://script.google.com/macros/s/AKfycbzbLS4MuvSEi8ubTm7MaM_oon3iTY2uqOZ-PfEDfFji5Cmpl0gmpQJyTgaTAUruCEgWcw/exec}?mode=reject&row=${row}&userId=${userId}`);
   alert("差戻しました");
   loadData();
 }
-async function loadData() {
 
-  console.log("①開始");
-
-  const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
-
-  console.log("②fetch成功");
-
-  const text = await res.text();
-  console.log("③生データ:", text);
-
-  const json = JSON.parse(text);
-  console.log("④JSON:", json);
-
-}  
 </script>
 
 </body>
