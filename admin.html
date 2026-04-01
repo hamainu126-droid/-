@@ -3,7 +3,6 @@
 <head>
 <meta charset="utf-8">
 <title>日報管理</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -18,8 +17,23 @@ body {
   background:#06C755;
   color:white;
   text-align:center;
-  padding:15px;
+  padding:16px;
+  font-size:18px;
   font-weight:bold;
+}
+
+/* フィルター */
+.filter {
+  padding:10px;
+  background:white;
+}
+
+input {
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  margin-bottom:8px;
 }
 
 /* カード */
@@ -28,13 +42,18 @@ body {
   margin:10px;
   padding:15px;
   border-radius:14px;
-  box-shadow:0 2px 5px rgba(0,0,0,0.05);
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
 }
 
+/* ステータス */
 .status {
   font-size:12px;
   margin-top:5px;
 }
+
+.ok { color:#06C755; }
+.ng { color:#ff4444; }
+.wait { color:#ff9800; }
 
 /* ボタン */
 .btns {
@@ -49,10 +68,11 @@ button {
   border:none;
   border-radius:10px;
   color:white;
+  font-weight:bold;
 }
 
-.ok { background:#06C755; }
-.ng { background:#ff4444; }
+.okBtn { background:#06C755; }
+.ngBtn { background:#ff4444; }
 </style>
 </head>
 
@@ -60,36 +80,82 @@ button {
 
 <div class="header">📊 日報管理</div>
 
+<div class="filter">
+  <input type="text" id="search" placeholder="名前検索">
+</div>
+
 <div id="list">読み込み中...</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwMdAtJsGsYC3dwjD8OIuKyQZJ-5-y4_wnupibRZ8rX05hors3yrt3exHNqxe_vVHXUPg/exec";
+let allData = [];
+
+const GAS_URL = "あなたのGAS URL";
 
 window.onload = async () => {
 
-  await liff.init({ liffId: "2009609532-iEXDl1k3" });
+  await liff.init({ liffId: "あなたのLIFF ID" });
+
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
 
   const profile = await liff.getProfile();
   userId = profile.userId;
 
   loadData();
+
+  document.getElementById("search").addEventListener("input", render);
 };
 
+
+// ===== データ取得 =====
 async function loadData() {
 
   const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
   const json = await res.json();
 
+  if (!json.data) {
+    document.getElementById("list").innerHTML = "権限なし or データなし";
+    return;
+  }
+
+  allData = json.data;
+
+  render();
+}
+
+
+// ===== 表示 =====
+function render() {
+
   let html = "";
 
-  json.data.forEach(d => {
+  const keyword = document.getElementById("search").value.toLowerCase();
+
+  let data = allData;
+
+  // 🔍 名前検索
+  if (keyword) {
+    data = data.filter(d => (d.name || "").toLowerCase().includes(keyword));
+  }
+
+  // 🔥 新しい順（超重要）
+  data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+  data.forEach(d => {
+
+    let statusClass = "wait";
+    if (d.status === "承認") statusClass = "ok";
+    if (d.status === "差戻し") statusClass = "ng";
 
     html += `
       <div class="card">
         <b>${d.name}</b> (${d.type})<br>
+
         📅 ${d.date}<br>
         ⏰ ${d.start}〜${d.end}<br>
         🏢 ${d.site}<br><br>
@@ -97,11 +163,13 @@ async function loadData() {
         📝 ${d.work}<br>
         📩 ${d.note || "なし"}<br>
 
-        <div class="status">状態：${d.status}</div>
+        <div class="status ${statusClass}">
+          状態：${d.status}
+        </div>
 
         <div class="btns">
-          <button class="ok" onclick="approve(${d.row})">承認</button>
-          <button class="ng" onclick="reject(${d.row})">差戻し</button>
+          <button class="okBtn" onclick="approve(${d.row})">承認</button>
+          <button class="ngBtn" onclick="reject(${d.row})">差戻し</button>
         </div>
       </div>
     `;
@@ -110,19 +178,33 @@ async function loadData() {
   document.getElementById("list").innerHTML = html || "データなし";
 }
 
+
+// ===== 承認 =====
 async function approve(row) {
+
   await fetch(GAS_URL, {
     method:"POST",
-    body:JSON.stringify({ mode:"approve", row })
+    body:JSON.stringify({
+      mode:"approve",
+      row:row
+    })
   });
+
   loadData();
 }
 
+
+// ===== 差戻し =====
 async function reject(row) {
+
   await fetch(GAS_URL, {
     method:"POST",
-    body:JSON.stringify({ mode:"reject", row })
+    body:JSON.stringify({
+      mode:"reject",
+      row:row
+    })
   });
+
   loadData();
 }
 </script>
