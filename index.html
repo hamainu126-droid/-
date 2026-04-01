@@ -3,243 +3,76 @@
 <head>
 <meta charset="utf-8">
 <title>作業日報</title>
-
-<style>
-body { font-family:-apple-system; background:#f0f2f5; margin:0; }
-.container { max-width:500px; margin:auto; padding:20px; }
-.card { background:white; padding:20px; border-radius:12px; margin-bottom:20px; }
-h2 { text-align:center; }
-
-input, select, textarea {
-  width:100%; padding:10px; margin-bottom:12px;
-  border-radius:8px; border:1px solid #ccc;
-}
-
-button {
-  width:100%; padding:15px;
-  background:#06C755; color:white;
-  border:none; border-radius:10px;
-}
-
-.small-btn {
-  width:auto;
-  padding:5px 10px;
-  margin-top:5px;
-}
-
-.list-card {
-  background:#fff;
-  padding:10px;
-  border-radius:10px;
-  margin-bottom:10px;
-}
-
-.editing {
-  background:#fff3cd;
-}
-</style>
 </head>
 
 <body>
 
-<div class="container">
+<h2>作業日報</h2>
 
-  <!-- 入力 -->
-  <div class="card" id="formCard">
-    <h2 id="formTitle">作業日報入力</h2>
+<input type="date" id="date"><br>
+<input type="text" id="name" placeholder="氏名"><br>
 
-    <input type="date" id="date">
-    <input type="text" id="name" placeholder="氏名">
+<select id="type">
+<option>昼勤</option>
+<option>夜勤</option>
+<option>休日</option>
+</select><br>
 
-    <select id="type">
-      <option>昼勤</option>
-      <option>夜勤</option>
-      <option>休日</option>
-    </select>
+<input type="time" id="start"><br>
+<input type="time" id="end"><br>
 
-    <label>現場名</label>
-    <input type="text" id="site">
+<input type="text" id="site" placeholder="現場名"><br>
 
-    <input type="time" id="start">
-    <input type="time" id="end">
+<textarea id="work" placeholder="作業内容"></textarea><br>
+<textarea id="note" placeholder="連絡事項"></textarea><br>
 
-    <textarea id="work" placeholder="作業内容"></textarea>
-    <textarea id="note" placeholder="連絡事項"></textarea>
-
-    <button onclick="sendData()">送信</button>
-  </div>
-
-  <!-- 一覧 -->
-  <div class="card">
-    <h2>自分の日報一覧</h2>
-
-    <input type="month" id="month" onchange="loadList()">
-
-    <div id="list"></div>
-  </div>
-
-</div>
+<button onclick="sendData()">送信</button>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-let editId = null;
-
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxuMx_8kTR4VnpcScxcFx3CRFCjR8JiYr1j1UbbAEvF28BVYhTZ2QyOSLqOqdt6b5sBoA/exec";
+const GAS_URL = "あなたのGAS URL";
 
 window.onload = async () => {
 
-  try {
+  await liff.init({ liffId: "あなたのLIFF ID" });
 
-    await liff.init({ liffId: "2009609532-pYjsxOfo" });
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
 
-    alert("init OK");
+  const profile = await liff.getProfile();
+  userId = profile.userId;
 
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
-
-    // LIFF外ブロック
-   // if (!liff.isInClient()) {
-    //  alert("LINEから開いてください");
-    //  return;
-   // }
-
-    alert("getProfile前");
-    
-    const profile = await liff.getProfile();
-
-    console.log("profile:", profile);
-
-    userId = profile.userId;
-
-    if (!userId) {
-      alert("userId取得失敗");
-      return;
-    }
-
-    // ★ここ改善（fallback付き）
-    name.value = profile.displayName || "未設定";
-
-    date.value = new Date().toISOString().split('T')[0];
-
-    const now = new Date();
-    month.value = now.toISOString().slice(0,7);
-
-    loadList();
-
-  } 
-  catch (e) {
-  alert("LIFFエラー：" + JSON.stringify(e));
-}
+  document.getElementById("name").value = profile.displayName;
+  document.getElementById("date").value =
+    new Date().toISOString().split('T')[0];
 };
 
-
-// ===== 送信（登録 or 更新）=====
 function sendData() {
 
- if (!userId) {
-    alert("ログインエラー");
-    return;
-  } 
-  const btn = document.querySelector("button");
-  btn.disabled = true;
-  btn.innerText = editId ? "更新中..." : "送信中...";
-
   const data = {
-    mode: editId ? "update" : "save",
-    id: editId,
-    date: date.value,
-    name: name.value,
-    type: type.value,
-    start: start.value,
-    end: end.value,
-    site: site.value,
-    work: work.value,
-    note: note.value,
+    mode: "save",
+    date: document.getElementById("date").value,
+    name: document.getElementById("name").value,
+    type: document.getElementById("type").value,
+    start: document.getElementById("start").value,
+    end: document.getElementById("end").value,
+    site: document.getElementById("site").value,
+    work: document.getElementById("work").value,
+    note: document.getElementById("note").value,
     userId: userId
   };
 
   fetch(GAS_URL, {
     method: "POST",
     body: JSON.stringify(data)
-  }).then(() => {
-
-    alert(editId ? "更新しました 👍" : "送信しました 👍");
-
-    resetForm();
-
-    btn.disabled = false;
-    btn.innerText = "送信";
-
-    loadList();
   });
-}
 
-// ===== 一覧取得 =====
-function loadList() {
-
-  const ym = month.value;
-  const [year, m] = ym.split("-");
-
-  fetch(`${GAS_URL}?mode=list&userId=${userId}&year=${year}&month=${m}`)
-    .then(res => res.json())
-    .then(res => {
-
-      const sorted = res.data.sort((a,b) =>
-        new Date(b.date) - new Date(a.date)
-      );
-
-      const html = sorted.map(r => `
-        <div class="list-card">
-          <b>${r.date}</b> ${r.site}<br>
-          ${r.work}<br>
-          状態：${r.status}<br>
-
-          <button class="small-btn" onclick='edit(${JSON.stringify(r)})'>編集</button>
-        </div>
-      `).join("");
-
-      list.innerHTML = html || "データなし";
-    });
-}
-
-// ===== 編集開始 =====
-function edit(r) {
-
-  if (r.status === "承認") {
-    alert("承認済みは編集できません");
-    return;
-  }
-
-  date.value = r.date;
-  type.value = r.type;
-  start.value = r.start;
-  end.value = r.end;
-  site.value = r.site;
-  work.value = r.work;
-  note.value = r.note;
-
-  editId = r.id;
-
-  formTitle.innerText = "日報編集";
-  formCard.classList.add("editing");
-
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
-// ===== フォームリセット =====
-function resetForm() {
-
-  editId = null;
-
-  formTitle.innerText = "作業日報入力";
-  formCard.classList.remove("editing");
-
-  work.value = "";
-  note.value = "";
+  alert("送信完了");
+  liff.closeWindow();
 }
 </script>
 
