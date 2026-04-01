@@ -152,6 +152,8 @@ window.onload = async () => {
   const profile = await liff.getProfile();
   userId = profile.userId;
 
+  console.log("自分のuserId:", userId); // ←デバッグ
+
   document.getElementById("name").value = profile.displayName;
   document.getElementById("date").value =
     new Date().toISOString().split('T')[0];
@@ -163,12 +165,11 @@ window.onload = async () => {
 // ===== 送信 =====
 function sendData() {
 
-  const btn = document.querySelector(".submit");
-  btn.disabled = true;
-  btn.innerText = "送信中...";
-
   fetch(GAS_URL, {
     method:"POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body:JSON.stringify({
       mode:"save",
       date:date.value,
@@ -182,10 +183,6 @@ function sendData() {
   });
 
   alert("送信しました 👍");
-
-  btn.disabled = false;
-  btn.innerText = "送信する";
-
   loadMyData();
 }
 
@@ -195,6 +192,9 @@ async function loadMyData() {
 
   const res = await fetch(GAS_URL, {
     method:"POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body:JSON.stringify({
       mode:"myList",
       userId:userId
@@ -202,6 +202,15 @@ async function loadMyData() {
   });
 
   const json = await res.json();
+
+  console.log("取得データ:", json); // ←デバッグ
+
+  // 🔥 ここ重要
+  if (!json.data) {
+    document.getElementById("myList").innerHTML = "データ取得失敗";
+    return;
+  }
+
   allData = json.data;
 
   render();
@@ -213,7 +222,7 @@ function render() {
 
   let html = "";
 
-  // 新しい順
+  // 🔥 新しい順
   allData.sort((a,b)=> new Date(b.date) - new Date(a.date));
 
   allData.forEach(d => {
@@ -255,6 +264,9 @@ function editMy(row) {
 
   fetch(GAS_URL, {
     method:"POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
     body:JSON.stringify({
       mode:"update",
       row:row,
