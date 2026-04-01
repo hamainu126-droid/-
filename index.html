@@ -37,11 +37,12 @@ button {
       <option>休日</option>
     </select>
 
+　　　<label>現場名</label>
+　　　<input type="text" id="site">
+    
     <input type="time" id="start">
     <input type="time" id="end">
 
-    <label>現場名</label>
-　　<input type="text" id="site">
     <textarea id="work" placeholder="作業内容"></textarea>
     <textarea id="note" placeholder="連絡事項"></textarea>
 
@@ -54,12 +55,12 @@ button {
 
 <script>
 let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwhUr26TV0BiUDA9jZreXbmBn-qG6SCiYBGaNd13qzJ24uYu1IvE4pjRwQpFfJJWgRnkA/exec";
+const GAS_URL = "あなたのGAS URL";
 
 // ===== 初期化 =====
 window.onload = async () => {
 
-  await liff.init({ liffId: "2009609532-pYjsxOfo" });
+  await liff.init({ liffId: "あなたのLIFF ID" });
 
   if (!liff.isLoggedIn()) {
     liff.login();
@@ -89,7 +90,7 @@ function sendData() {
     type: document.getElementById("type").value,
     start: document.getElementById("start").value,
     end: document.getElementById("end").value,
-    site: document.getElementById("site").value, // ← 追加
+    site: document.getElementById("site").value,
     work: document.getElementById("work").value,
     note: document.getElementById("note").value,
     userId: userId
@@ -111,4 +112,3 @@ function sendData() {
 
 </body>
 </html>
-  
