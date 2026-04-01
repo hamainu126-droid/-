@@ -3,145 +3,75 @@
 <head>
 <meta charset="utf-8">
 <title>日報管理</title>
-
-<style>
-body { font-family:-apple-system; background:#f0f2f5; margin:0; }
-.header { background:#06C755; color:white; padding:15px; text-align:center; }
-.filter { padding:10px; background:white; }
-input {
-  width:100%; padding:10px; margin-bottom:8px;
-  border-radius:8px; border:1px solid #ccc;
-}
-.card {
-  background:white; margin:10px;
-  padding:15px; border-radius:12px;
-}
-.status { padding:4px 8px; border-radius:20px; font-size:12px; }
-.approved { background:#e6f9ed; color:#00a651; }
-.pending { background:#fff4e5; color:#ff9800; }
-.rejected { background:#ffe5e5; color:#e53935; }
-button {
-  width:48%; padding:10px;
-  border:none; border-radius:10px;
-  color:white;
-}
-.ok { background:#06C755; }
-.ng { background:#ff4444; }
-</style>
 </head>
 
 <body>
 
-<div class="header">📋 日報管理</div>
+<h2>日報管理</h2>
 
-<div class="filter">
-  <input type="text" id="searchName" placeholder="名前検索">
-  <input type="month" id="searchMonth">
-</div>
-
-<div id="list">読み込み中...</div>
+<div id="list"></div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-let allData = [];
+const GAS_URL = "あなたのGAS URL";
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxuMx_8kTR4VnpcScxcFx3CRFCjR8JiYr1j1UbbAEvF28BVYhTZ2QyOSLqOqdt6b5sBoA/exec";
-
-// ===== 初期化 =====
 window.onload = async () => {
 
-  await liff.init({ liffId: "2009609532-iEXDl1k3" });
-
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
+  await liff.init({ liffId: "あなたのLIFF ID" });
 
   const profile = await liff.getProfile();
   userId = profile.userId;
 
   loadData();
-
-  document.getElementById("searchName").addEventListener("input", render);
-  document.getElementById("searchMonth").addEventListener("input", render);
 };
 
-
-// ===== データ取得 =====
 async function loadData() {
 
   const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
   const json = await res.json();
 
-  if (json.status !== "OK") {
-    document.getElementById("list").innerHTML = "権限なし";
-    return;
-  }
-
-  allData = json.data;
-  render();
-}
-
-
-// ===== 表示 =====
-function render() {
-
-  const name = document.getElementById("searchName").value.toLowerCase();
-  const month = document.getElementById("searchMonth").value;
-
-  let data = allData;
-
-  if (name) {
-    data = data.filter(d => (d.name || "").toLowerCase().includes(name));
-  }
-
-  if (month) {
-    data = data.filter(d => (d.date || "").startsWith(month));
-  }
-
-  data.sort((a, b) => new Date(b.date) - new Date(a.date));
-
   let html = "";
 
-  data.forEach(d => {
-
-    let statusClass = "pending";
-    if (d.status === "承認") statusClass = "approved";
-    if (d.status === "差戻し") statusClass = "rejected";
+  json.data.forEach(d => {
 
     html += `
-      <div class="card">
-        <b>${d.name}</b><br>
-        ${d.timestamp}<br>
-        ${d.date} ${d.start}〜${d.end}<br>
+      <div>
+        ${d.name} ${d.date}<br>
+        ${d.start}〜${d.end}<br>
         🏢 ${d.site}<br>
-        📝 ${d.work}<br>
-        📩 ${d.note || "なし"}<br>
+        ${d.work}<br>
+        ${d.status}<br>
 
-        <div class="status ${statusClass}">
-          ${d.status || "未承認"}
-        </div>
-
-        <button class="ok" onclick="approve(${d.row})">承認</button>
-        <button class="ng" onclick="reject(${d.row})">差戻し</button>
-      </div>
+        <button onclick="approve(${d.row})">承認</button>
+        <button onclick="reject(${d.row})">差戻し</button>
+      </div><hr>
     `;
   });
 
-  document.getElementById("list").innerHTML = html || "データなし";
+  document.getElementById("list").innerHTML = html;
 }
 
-
-// ===== 承認 =====
 async function approve(row) {
- await fetch(GAS_URL, {
-  method: "POST",
-  body: JSON.stringify({
-    mode: "approve",
-    id: d.id
-  })
+  await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({ mode:"approve", row })
+  });
+  loadData();
+}
+
+async function reject(row) {
+  await fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({ mode:"reject", row })
+  });
+  loadData();
+}
+</script>
+
+</body>
+</html>
 });
   loadData();
 }
