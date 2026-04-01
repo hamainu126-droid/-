@@ -190,15 +190,9 @@ function sendData() {
 // ===== 一覧取得 =====
 async function loadMyData() {
 
-  const res = await fetch(GAS_URL, {
-    method:"POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body:JSON.stringify({
-      mode:"myList",
-      userId:userId
-    })
+  const res = await fetch(
+  GAS_URL + "?mode=myList&userId=" + userId
+);
   });
 
   const json = await res.json();
