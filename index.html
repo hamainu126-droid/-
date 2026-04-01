@@ -7,16 +7,31 @@
 <style>
 body { font-family:-apple-system; background:#f0f2f5; margin:0; }
 .container { max-width:500px; margin:auto; padding:20px; }
-.card { background:white; padding:20px; border-radius:12px; }
+.card { background:white; padding:20px; border-radius:12px; margin-bottom:20px; }
 h2 { text-align:center; }
+
 input, select, textarea {
   width:100%; padding:10px; margin-bottom:12px;
   border-radius:8px; border:1px solid #ccc;
 }
+
 button {
   width:100%; padding:15px;
   background:#06C755; color:white;
   border:none; border-radius:10px;
+}
+
+.small-btn {
+  width:auto;
+  padding:5px 10px;
+  margin-top:5px;
+}
+
+.list-card {
+  background:#fff;
+  padding:10px;
+  border-radius:10px;
+  margin-bottom:10px;
 }
 </style>
 </head>
@@ -24,8 +39,9 @@ button {
 <body>
 
 <div class="container">
-  <div class="card">
 
+  <!-- 入力 -->
+  <div class="card">
     <h2>作業日報</h2>
 
     <input type="date" id="date">
@@ -37,9 +53,9 @@ button {
       <option>休日</option>
     </select>
 
-　　　<label>現場名</label>
-　　　<input type="text" id="site">
-    
+    <label>現場名</label>
+    <input type="text" id="site">
+
     <input type="time" id="start">
     <input type="time" id="end">
 
@@ -47,20 +63,29 @@ button {
     <textarea id="note" placeholder="連絡事項"></textarea>
 
     <button onclick="sendData()">送信</button>
-
   </div>
+
+  <!-- 一覧 -->
+  <div class="card">
+    <h2>自分の日報一覧</h2>
+
+    <input type="month" id="month" onchange="loadList()">
+
+    <div id="list"></div>
+  </div>
+
 </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-const GAS_URL = "あなたのGAS URL";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzKaGYlcnDTQuAfcnoJZDxBlTROBGJx_AXCFZt3R7gbc_VNOh9rQB9HCOJHwr-qacyqxg/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
 
-  await liff.init({ liffId: "あなたのLIFF ID" });
+  await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
   if (!liff.isLoggedIn()) {
     liff.login();
@@ -73,8 +98,14 @@ window.onload = async () => {
   document.getElementById("name").value = profile.displayName;
   document.getElementById("date").value =
     new Date().toISOString().split('T')[0];
-};
 
+  // 今月セット
+  const now = new Date();
+  document.getElementById("month").value =
+    now.toISOString().slice(0,7);
+
+  loadList();
+};
 
 // ===== 送信 =====
 function sendData() {
@@ -85,18 +116,17 @@ function sendData() {
 
   const data = {
     mode: "save",
-    date: document.getElementById("date").value,
-    name: document.getElementById("name").value,
-    type: document.getElementById("type").value,
-    start: document.getElementById("start").value,
-    end: document.getElementById("end").value,
-    site: document.getElementById("site").value,
-    work: document.getElementById("work").value,
-    note: document.getElementById("note").value,
+    date: date.value,
+    name: name.value,
+    type: type.value,
+    start: start.value,
+    end: end.value,
+    site: site.value,
+    work: work.value,
+    note: note.value,
     userId: userId
   };
 
-  // ✅ CORS回避（ヘッダーなし）
   fetch(GAS_URL, {
     method: "POST",
     body: JSON.stringify(data)
@@ -104,9 +134,67 @@ function sendData() {
 
   alert("送信しました 👍");
 
-  if (liff.isInClient()) {
-    liff.closeWindow();
+  btn.disabled = false;
+  btn.innerText = "送信";
+
+  loadList();
+}
+
+// ===== 一覧取得 =====
+function loadList() {
+
+  const ym = month.value;
+  const [year, m] = ym.split("-");
+
+  fetch(`${GAS_URL}?mode=list&userId=${userId}&year=${year}&month=${m}`)
+    .then(res => res.json())
+    .then(res => {
+
+      // 日付降順
+      const sorted = res.data.sort((a,b) =>
+        b.date.localeCompare(a.date)
+      );
+
+      const html = sorted.map(r => `
+        <div class="list-card">
+          <b>${r.date}</b> ${r.site}<br>
+          ${r.work}<br>
+          状態：${r.status}<br>
+          <button class="small-btn" onclick='edit(${JSON.stringify(r)})'>編集</button>
+        </div>
+      `).join("");
+
+      list.innerHTML = html;
+    });
+}
+
+// ===== 編集 =====
+function edit(r) {
+
+  if (r.status === "承認") {
+    alert("承認済みは編集できません");
+    return;
   }
+
+  const workNew = prompt("作業内容", r.work);
+  if (!workNew) return;
+
+  fetch(GAS_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      mode: "update",
+      id: r.id,
+      work: workNew,
+      type: r.type,
+      start: r.start,
+      end: r.end,
+      site: r.site,
+      note: r.note
+    })
+  }).then(() => {
+    alert("更新しました");
+    loadList();
+  });
 }
 </script>
 
