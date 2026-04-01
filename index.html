@@ -2,8 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>日報入力</title>
-
+<title>日報アプリ</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -26,6 +25,7 @@ body {
 /* コンテナ */
 .container {
   padding:15px;
+  padding-bottom:80px;
 }
 
 /* カード */
@@ -37,14 +37,13 @@ body {
   box-shadow:0 2px 6px rgba(0,0,0,0.05);
 }
 
-/* ラベル */
+/* 入力 */
 label {
   font-size:12px;
   color:#888;
 }
 
-/* 入力 */
-input, select, textarea {
+input, textarea {
   width:100%;
   padding:12px;
   margin-top:5px;
@@ -55,24 +54,43 @@ input, select, textarea {
 }
 
 /* ボタン */
-button {
+.btn {
   width:100%;
-  padding:16px;
-  background:#06C755;
-  color:white;
+  padding:14px;
   border:none;
-  border-radius:14px;
-  font-size:16px;
+  border-radius:12px;
+  font-size:15px;
   font-weight:bold;
 }
 
-/* フッター固定 */
+.submit {
+  background:#06C755;
+  color:white;
+}
+
+.edit {
+  background:#2196F3;
+  color:white;
+  margin-top:8px;
+}
+
+/* ステータス */
+.status {
+  font-size:12px;
+  margin-top:5px;
+}
+
+.ok { color:#06C755; }
+.ng { color:#ff4444; }
+.wait { color:#ff9800; }
+
+/* 固定ボタン */
 .footer {
   position:fixed;
   bottom:0;
   width:100%;
+  background:white;
   padding:10px;
-  background:#fff;
   box-shadow:0 -2px 6px rgba(0,0,0,0.05);
 }
 </style>
@@ -80,10 +98,11 @@ button {
 
 <body>
 
-<div class="header">📋 日報入力</div>
+<div class="header">📋 日報アプリ</div>
 
 <div class="container">
 
+<!-- 入力 -->
 <div class="card">
 <label>日付</label>
 <input type="date" id="date">
@@ -91,41 +110,34 @@ button {
 <label>氏名</label>
 <input type="text" id="name">
 
-<label>勤務区分</label>
-<select id="type">
-<option>昼勤</option>
-<option>夜勤</option>
-<option>休日</option>
-</select>
-</div>
-
-<div class="card">
-<label>勤務時間</label>
+<label>開始</label>
 <input type="time" id="start">
+
+<label>終了</label>
 <input type="time" id="end">
 
 <label>現場名</label>
 <input type="text" id="site">
-</div>
 
-<div class="card">
 <label>作業内容</label>
 <textarea id="work"></textarea>
-
-<label>連絡事項</label>
-<textarea id="note"></textarea>
 </div>
+
+<!-- 履歴 -->
+<h3>📜 自分の日報</h3>
+<div id="myList">読み込み中...</div>
 
 </div>
 
 <div class="footer">
-<button onclick="sendData()">送信する</button>
+<button class="btn submit" onclick="sendData()">送信する</button>
 </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
+let allData = [];
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwMdAtJsGsYC3dwjD8OIuKyQZJ-5-y4_wnupibRZ8rX05hors3yrt3exHNqxe_vVHXUPg/exec";
 
 window.onload = async () => {
@@ -143,35 +155,121 @@ window.onload = async () => {
   document.getElementById("name").value = profile.displayName;
   document.getElementById("date").value =
     new Date().toISOString().split('T')[0];
+
+  loadMyData();
 };
 
+
+// ===== 送信 =====
 function sendData() {
 
-  const btn = document.querySelector("button");
+  const btn = document.querySelector(".submit");
   btn.disabled = true;
   btn.innerText = "送信中...";
 
-  const data = {
-    mode: "save",
-    date: document.getElementById("date").value,
-    name: document.getElementById("name").value,
-    type: document.getElementById("type").value,
-    start: document.getElementById("start").value,
-    end: document.getElementById("end").value,
-    site: document.getElementById("site").value,
-    work: document.getElementById("work").value,
-    note: document.getElementById("note").value,
-    userId: userId
-  };
-
   fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify(data)
+    method:"POST",
+    body:JSON.stringify({
+      mode:"save",
+      date:date.value,
+      name:name.value,
+      start:start.value,
+      end:end.value,
+      site:site.value,
+      work:work.value,
+      userId:userId
+    })
   });
 
   alert("送信しました 👍");
-  liff.closeWindow();
+
+  btn.disabled = false;
+  btn.innerText = "送信する";
+
+  loadMyData();
 }
+
+
+// ===== 一覧取得 =====
+async function loadMyData() {
+
+  const res = await fetch(GAS_URL, {
+    method:"POST",
+    body:JSON.stringify({
+      mode:"myList",
+      userId:userId
+    })
+  });
+
+  const json = await res.json();
+  allData = json.data;
+
+  render();
+}
+
+
+// ===== 表示 =====
+function render() {
+
+  let html = "";
+
+  // 新しい順
+  allData.sort((a,b)=> new Date(b.date) - new Date(a.date));
+
+  allData.forEach(d => {
+
+    let statusClass = "wait";
+    if (d.status === "承認") statusClass = "ok";
+    if (d.status === "差戻し") statusClass = "ng";
+
+    html += `
+      <div class="card">
+        📅 ${d.date}<br>
+        ⏰ ${d.start}〜${d.end}<br>
+        🏢 ${d.site}<br>
+
+        📝 ${d.work}<br>
+
+        <div class="status ${statusClass}">
+          状態：${d.status}
+        </div>
+
+        ${d.status !== "承認" ? 
+          `<button class="btn edit" onclick="editMy(${d.row})">修正</button>` 
+          : ""}
+      </div>
+    `;
+  });
+
+  document.getElementById("myList").innerHTML = html || "データなし";
+}
+
+
+// ===== 修正 =====
+function editMy(row) {
+
+  const d = allData.find(x => x.row === row);
+
+  const newWork = prompt("作業内容を修正", d.work);
+  if (newWork === null) return;
+
+  fetch(GAS_URL, {
+    method:"POST",
+    body:JSON.stringify({
+      mode:"update",
+      row:row,
+      work:newWork,
+      userId:userId
+    })
+  });
+
+  alert("更新しました 👍");
+  loadMyData();
+}
+</script>
+
+</body>
+</html>
 </script>
 
 </body>
