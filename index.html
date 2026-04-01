@@ -94,25 +94,31 @@ window.onload = async () => {
 
     await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
-    // 🔥 未ログインならここで止める
     if (!liff.isLoggedIn()) {
       liff.login();
       return;
     }
 
-    // 🔥 プロフィール取得
+    // LIFF外ブロック
+    if (!liff.isInClient()) {
+      alert("LINEから開いてください");
+      return;
+    }
+
     const profile = await liff.getProfile();
+
+    console.log("profile:", profile);
 
     userId = profile.userId;
 
     if (!userId) {
-      alert("ユーザーID取得失敗");
+      alert("userId取得失敗");
       return;
     }
 
-    console.log("userId:", userId); // デバッグ
+    // ★ここ改善（fallback付き）
+    name.value = profile.displayName || "未設定";
 
-    name.value = profile.displayName;
     date.value = new Date().toISOString().split('T')[0];
 
     const now = new Date();
@@ -121,8 +127,9 @@ window.onload = async () => {
     loadList();
 
   } catch (e) {
-    alert("LIFFエラー: " + e.message);
+    alert("LIFFエラー：" + e.message);
   }
+};
 };
 
 // ===== 送信（登録 or 更新）=====
