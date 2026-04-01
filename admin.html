@@ -20,35 +20,53 @@ body {
   padding:16px;
   font-size:18px;
   font-weight:bold;
+  position:sticky;
+  top:0;
+  z-index:10;
 }
 
 /* フィルター */
 .filter {
   padding:10px;
   background:white;
+  position:sticky;
+  top:56px;
+  z-index:9;
 }
 
 input {
   width:100%;
-  padding:10px;
-  border-radius:10px;
+  padding:12px;
+  border-radius:12px;
   border:1px solid #ddd;
   margin-bottom:8px;
+  font-size:14px;
 }
 
 /* カード */
 .card {
   background:white;
-  margin:10px;
-  padding:15px;
-  border-radius:14px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  margin:12px;
+  padding:16px;
+  border-radius:16px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.05);
+  transition:0.2s;
+}
+
+.card:hover {
+  transform:translateY(-2px);
+}
+
+/* 名前 */
+.name {
+  font-weight:bold;
+  font-size:16px;
 }
 
 /* ステータス */
 .status {
   font-size:12px;
-  margin-top:5px;
+  margin-top:6px;
 }
 
 .ok { color:#06C755; }
@@ -59,20 +77,28 @@ input {
 .btns {
   display:flex;
   gap:10px;
-  margin-top:10px;
+  margin-top:12px;
 }
 
 button {
   flex:1;
-  padding:10px;
+  padding:12px;
   border:none;
-  border-radius:10px;
+  border-radius:12px;
   color:white;
   font-weight:bold;
+  font-size:14px;
 }
 
 .okBtn { background:#06C755; }
 .ngBtn { background:#ff4444; }
+
+/* ローディング */
+.loading {
+  text-align:center;
+  padding:20px;
+  color:#888;
+}
 </style>
 </head>
 
@@ -84,7 +110,7 @@ button {
   <input type="text" id="search" placeholder="名前検索">
 </div>
 
-<div id="list">読み込み中...</div>
+<div id="list" class="loading">読み込み中...</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -94,6 +120,7 @@ let allData = [];
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwMdAtJsGsYC3dwjD8OIuKyQZJ-5-y4_wnupibRZ8rX05hors3yrt3exHNqxe_vVHXUPg/exec";
 
+// ===== 初期化 =====
 window.onload = async () => {
 
   await liff.init({ liffId: "2009609532-iEXDl1k3" });
@@ -108,24 +135,31 @@ window.onload = async () => {
 
   loadData();
 
-  document.getElementById("search").addEventListener("input", render);
+  document.getElementById("search")
+    .addEventListener("input", render);
 };
 
 
 // ===== データ取得 =====
 async function loadData() {
 
-  const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
-  const json = await res.json();
+  try {
 
-  if (!json.data) {
-    document.getElementById("list").innerHTML = "権限なし or データなし";
-    return;
+    const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
+    const json = await res.json();
+
+    if (json.status !== "OK") {
+      document.getElementById("list").innerHTML = "権限なし";
+      return;
+    }
+
+    allData = json.data;
+
+    render();
+
+  } catch (e) {
+    document.getElementById("list").innerHTML = "通信エラー";
   }
-
-  allData = json.data;
-
-  render();
 }
 
 
@@ -134,17 +168,24 @@ function render() {
 
   let html = "";
 
-  const keyword = document.getElementById("search").value.toLowerCase();
+  const keyword = document
+    .getElementById("search")
+    .value
+    .toLowerCase();
 
-  let data = allData;
+  let data = [...allData];
 
   // 🔍 名前検索
   if (keyword) {
-    data = data.filter(d => (d.name || "").toLowerCase().includes(keyword));
+    data = data.filter(d =>
+      (d.name || "").toLowerCase().includes(keyword)
+    );
   }
 
   // 🔥 新しい順（超重要）
-  data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  data.sort((a, b) =>
+    new Date(b.timestamp) - new Date(a.timestamp)
+  );
 
   data.forEach(d => {
 
@@ -154,7 +195,11 @@ function render() {
 
     html += `
       <div class="card">
-        <b>${d.name}</b> (${d.type})<br>
+
+        <div class="name">${d.name}</div>
+        <div>${d.type}</div>
+
+        <br>
 
         📅 ${d.date}<br>
         ⏰ ${d.start}〜${d.end}<br>
@@ -171,11 +216,13 @@ function render() {
           <button class="okBtn" onclick="approve(${d.row})">承認</button>
           <button class="ngBtn" onclick="reject(${d.row})">差戻し</button>
         </div>
+
       </div>
     `;
   });
 
-  document.getElementById("list").innerHTML = html || "データなし";
+  document.getElementById("list").innerHTML =
+    html || "<div class='loading'>データなし</div>";
 }
 
 
@@ -184,9 +231,13 @@ async function approve(row) {
 
   await fetch(GAS_URL, {
     method:"POST",
-    body:JSON.stringify({
+    headers: {
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
       mode:"approve",
-      row:row
+      row:row,
+      userId:userId
     })
   });
 
@@ -199,9 +250,13 @@ async function reject(row) {
 
   await fetch(GAS_URL, {
     method:"POST",
-    body:JSON.stringify({
+    headers: {
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({
       mode:"reject",
-      row:row
+      row:row,
+      userId:userId
     })
   });
 
