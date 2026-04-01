@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>日報履歴</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body { margin:0; font-family:-apple-system; background:#f5f5f5; }
+.header { background:#06C755; color:white; text-align:center; padding:16px; }
+.container { padding:15px; padding-bottom:80px; }
+.card { background:white; border-radius:16px; padding:15px; margin-bottom:15px; }
+.status { font-size:12px; margin-top:5px; }
+.ok { color:#06C755; } .ng { color:#ff4444; } .wait { color:#ff9800; }
+.btn { width:100%; padding:10px; border:none; border-radius:10px; margin-top:10px; }
+.edit { background:#2196F3; color:white; }
+.back { background:#06C755; color:white; }
+</style>
+</head>
+
+<body>
+
+<div class="header">📜 日報履歴</div>
+
+<div class="container">
+
+<a href="index.html">
+<button class="btn back">入力に戻る</button>
+</a>
+
+<div id="list">読み込み中...</div>
+
+</div>
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<script>
+let userId = "";
+let allData = [];
+
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwMdAtJsGsYC3dwjD8OIuKyQZJ-5-y4_wnupibRZ8rX05hors3yrt3exHNqxe_vVHXUPg/exec";
+
+window.onload = async () => {
+
+  await liff.init({ liffId: "←ここに履歴用LIFFID" });
+
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
+  }
+
+  const profile = await liff.getProfile();
+  userId = profile.userId;
+
+  loadData();
+};
+
+
+// ===== 取得 =====
+async function loadData() {
+
+  const res = await fetch(`${GAS_URL}?mode=myList&userId=${userId}`);
+  const json = await res.json();
+
+  allData = json.data || [];
+
+  render();
+}
+
+
+// ===== 表示 =====
+function render() {
+
+  let html = "";
+
+  allData.sort((a,b)=> new Date(b.date) - new Date(a.date));
+
+  allData.forEach(d => {
+
+    let statusClass = "wait";
+    if (d.status === "承認") statusClass = "ok";
+    if (d.status === "差戻し") statusClass = "ng";
+
+    html += `
+      <div class="card">
+        📅 ${d.date}<br>
+        ⏰ ${d.start}〜${d.end}<br>
+        🏢 ${d.site}<br>
+
+        📝 ${d.work}<br>
+        📩 ${d.note || "なし"}<br>
+
+        <div class="status ${statusClass}">
+          状態：${d.status}
+        </div>
+
+        ${d.status !== "承認"
+          ? `<button class="btn edit" onclick="edit('${d.id}')">修正</button>`
+          : ""}
+      </div>
+    `;
+  });
+
+  list.innerHTML = html || "データなし";
+}
+
+
+// ===== 修正 =====
+function edit(id) {
+
+  const d = allData.find(x => x.id === id);
+
+  const newWork = prompt("作業内容修正", d.work);
+  if (newWork === null) return;
+
+  const newNote = prompt("連絡事項修正", d.note);
+
+  fetch(GAS_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({
+      mode:"update",
+      id:id,
+      work:newWork,
+      note:newNote,
+      userId:userId
+    })
+  });
+
+  alert("更新しました 👍");
+  loadData();
+}
+</script>
+
+</body>
+</html>
