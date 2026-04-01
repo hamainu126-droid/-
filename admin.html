@@ -47,7 +47,7 @@ button {
 let userId = "";
 let allData = [];
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzKaGYlcnDTQuAfcnoJZDxBlTROBGJx_AXCFZt3R7gbc_VNOh9rQB9HCOJHwr-qacyqxg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxpXlypz6CNariZ3LahV0bYZs_IwZyybqwvzO2RbD29I6YKcH_0zmecgYRfTFqf6fdn5g/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
@@ -101,7 +101,7 @@ function render() {
     data = data.filter(d => (d.date || "").startsWith(month));
   }
 
-  data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  data.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   let html = "";
 
