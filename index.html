@@ -90,29 +90,58 @@ window.onload = async () => {
 
 
 // ===== 送信 =====
-function sendData() {
+async function sendData() {
 
-  fetch(GAS_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body:JSON.stringify({
-      mode:"save",
-      date:date.value,
-      name:name.value,
-      type:type.value,
-      start:start.value,
-      end:end.value,
-      site:site.value,
-      work:work.value,
-      note:note.value,
-      userId:userId
-    })
-  });
+  const btn = document.querySelector(".submit");
 
-  alert("送信しました 👍");
+  btn.disabled = true;
+  btn.innerText = "送信中...";
 
-  work.value = "";
-  note.value = "";
+  try {
+
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+
+      // 🔥 これ必須（これないとGASで受け取れない）
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        mode: "save",
+        date: date.value,
+        name: name.value,
+        type: type.value,
+        start: start.value,
+        end: end.value,
+        site: site.value,
+        work: work.value,
+        note: note.value,
+        userId: userId
+      })
+    });
+
+    // 🔥 レスポンス確認（超重要）
+    const json = await res.json();
+    console.log("GASレスポンス:", json);
+
+    if (json.status === "OK") {
+      alert("送信成功 👍");
+
+      // 入力クリア
+      work.value = "";
+      note.value = "";
+
+    } else {
+      alert("保存失敗：" + json.message);
+    }
+
+  } catch (e) {
+    alert("通信エラー：" + e.message);
+  }
+
+  btn.disabled = false;
+  btn.innerText = "送信する";
 }
 </script>
 
