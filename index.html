@@ -86,33 +86,52 @@ button {
 let userId = "";
 let editId = null;
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwEwP-AI6lcwZdlCzU8SpKn2c4r_6WcPCf4iuxW6lx2B6XkgC4z38b-01Zloqikce87jg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzTqyfEhizgLsG05z0bHrik4XoJs9-GN9GRU8pcEgkKwztB2pTPCG4VRoHIC848Tw1geg/exec";
 
-// ===== 初期化 =====
 window.onload = async () => {
 
-  await liff.init({ liffId: "2009609532-pYjsxOfo" });
+  try {
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
+    await liff.init({ liffId: "2009609532-pYjsxOfo" });
+
+    // 🔥 未ログインならここで止める
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    // 🔥 プロフィール取得
+    const profile = await liff.getProfile();
+
+    userId = profile.userId;
+
+    if (!userId) {
+      alert("ユーザーID取得失敗");
+      return;
+    }
+
+    console.log("userId:", userId); // デバッグ
+
+    name.value = profile.displayName;
+    date.value = new Date().toISOString().split('T')[0];
+
+    const now = new Date();
+    month.value = now.toISOString().slice(0,7);
+
+    loadList();
+
+  } catch (e) {
+    alert("LIFFエラー: " + e.message);
   }
-
-  const profile = await liff.getProfile();
-  userId = profile.userId;
-
-  name.value = profile.displayName;
-  date.value = new Date().toISOString().split('T')[0];
-
-  const now = new Date();
-  month.value = now.toISOString().slice(0,7);
-
-  loadList();
 };
 
 // ===== 送信（登録 or 更新）=====
 function sendData() {
 
+ if (!userId) {
+    alert("ログインエラー");
+    return;
+  } 
   const btn = document.querySelector("button");
   btn.disabled = true;
   btn.innerText = editId ? "更新中..." : "送信中...";
