@@ -68,7 +68,7 @@ input, textarea, select {
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
-<script>
+  <script>
 let userId = "";
 const GAS_URL = "https://script.google.com/macros/s/AKfycbxJhUnMsk0U-tHueG15QRA12w7fJgUwFuJILFIVqDCgcDC5TfN6uYAyorgQO6csNbIi/exec";
 
@@ -84,8 +84,11 @@ window.onload = async () => {
   const profile = await liff.getProfile();
   userId = profile.userId;
 
-  name.value = profile.displayName;
-  date.value = new Date().toISOString().split('T')[0];
+  const nameEl = document.getElementById("name");
+  const dateEl = document.getElementById("date");
+
+  nameEl.value = profile.displayName;
+  dateEl.value = new Date().toISOString().split('T')[0];
 };
 
 
@@ -93,27 +96,38 @@ window.onload = async () => {
 async function sendData() {
 
   const btn = document.querySelector(".submit");
+
+  const nameEl = document.getElementById("name");
+  const dateEl = document.getElementById("date");
+  const typeEl = document.getElementById("type");
+  const startEl = document.getElementById("start");
+  const endEl = document.getElementById("end");
+  const siteEl = document.getElementById("site");
+  const workEl = document.getElementById("work");
+  const noteEl = document.getElementById("note");
+
   btn.disabled = true;
   btn.innerText = "送信中...";
 
   try {
 
-    const formData = new URLSearchParams();
-
-    formData.append("mode", "save");
-    formData.append("date", date.value);
-    formData.append("name", name.value);
-    formData.append("type", type.value);
-    formData.append("start", start.value);
-    formData.append("end", end.value);
-    formData.append("site", site.value);
-    formData.append("work", work.value);
-    formData.append("note", note.value);
-    formData.append("userId", userId);
-
     const res = await fetch(GAS_URL, {
       method: "POST",
-      body: formData
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        mode: "save",
+        date: dateEl.value,
+        name: nameEl.value,
+        type: typeEl.value,
+        start: startEl.value,
+        end: endEl.value,
+        site: siteEl.value,
+        work: workEl.value,
+        note: noteEl.value,
+        userId: userId
+      })
     });
 
     const json = await res.json();
@@ -121,8 +135,6 @@ async function sendData() {
 
     if (json.status === "OK") {
       alert("送信成功 👍");
-      work.value = "";
-      note.value = "";
     } else {
       alert("保存失敗：" + json.message);
     }
