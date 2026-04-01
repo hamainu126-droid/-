@@ -136,14 +136,13 @@ function render() {
 
 // ===== 承認 =====
 async function approve(row) {
-  await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      mode: "approve",
-      row: row,
-      userId: userId
-    })
-  });
+ await fetch(GAS_URL, {
+  method: "POST",
+  body: JSON.stringify({
+    mode: "approve",
+    id: d.id
+  })
+});
   loadData();
 }
 
@@ -151,13 +150,12 @@ async function approve(row) {
 // ===== 差戻し =====
 async function reject(row) {
   await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({
-      mode: "reject",
-      row: row,
-      userId: userId
-    })
-  });
+  method: "POST",
+  body: JSON.stringify({
+    mode: "reject",
+    id: d.id
+  })
+});
   loadData();
 }
 
