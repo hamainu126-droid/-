@@ -6,86 +6,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body {
-  margin:0;
-  font-family:-apple-system;
-  background:#f5f5f5;
-}
-
-.header {
-  background:#06C755;
-  color:white;
-  text-align:center;
-  padding:16px;
-  font-size:18px;
-  font-weight:bold;
-}
-
-.container {
-  padding:15px;
-  padding-bottom:80px;
-}
-
-.card {
-  background:white;
-  border-radius:16px;
-  padding:15px;
-  margin-bottom:15px;
-  box-shadow:0 2px 6px rgba(0,0,0,0.05);
-}
-
-label {
-  font-size:12px;
-  color:#888;
-}
-
-input, textarea, select {
-  width:100%;
-  padding:12px;
-  margin-top:5px;
-  margin-bottom:12px;
-  border-radius:10px;
-  border:1px solid #ddd;
-  font-size:16px;
-}
-
-.btn {
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  font-size:15px;
-  font-weight:bold;
-}
-
-.submit {
-  background:#06C755;
-  color:white;
-}
-
-.edit {
-  background:#2196F3;
-  color:white;
-  margin-top:8px;
-}
-
-.status {
-  font-size:12px;
-  margin-top:5px;
-}
-
-.ok { color:#06C755; }
-.ng { color:#ff4444; }
-.wait { color:#ff9800; }
-
-.footer {
-  position:fixed;
-  bottom:0;
-  width:100%;
-  background:white;
-  padding:10px;
-  box-shadow:0 -2px 6px rgba(0,0,0,0.05);
-}
+body { margin:0; font-family:-apple-system; background:#f5f5f5; }
+.header { background:#06C755; color:white; text-align:center; padding:16px; font-size:18px; font-weight:bold; }
+.container { padding:15px; padding-bottom:80px; }
+.card { background:white; border-radius:16px; padding:15px; margin-bottom:15px; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+label { font-size:12px; color:#888; }
+input, textarea, select { width:100%; padding:12px; margin-top:5px; margin-bottom:12px; border-radius:10px; border:1px solid #ddd; font-size:16px; }
+.btn { width:100%; padding:14px; border:none; border-radius:12px; font-size:15px; font-weight:bold; }
+.submit { background:#06C755; color:white; }
+.edit { background:#2196F3; color:white; margin-top:8px; }
+.status { font-size:12px; margin-top:5px; }
+.ok { color:#06C755; } .ng { color:#ff4444; } .wait { color:#ff9800; }
+.footer { position:fixed; bottom:0; width:100%; background:white; padding:10px; }
 </style>
 </head>
 
@@ -96,7 +28,6 @@ input, textarea, select {
 <div class="container">
 
 <div class="card">
-
 <label>日付</label>
 <input type="date" id="date">
 
@@ -105,9 +36,9 @@ input, textarea, select {
 
 <label>勤務区分</label>
 <select id="type">
-  <option>昼勤</option>
-  <option>夜勤</option>
-  <option>休日</option>
+<option>昼勤</option>
+<option>夜勤</option>
+<option>休日</option>
 </select>
 
 <label>開始</label>
@@ -124,7 +55,6 @@ input, textarea, select {
 
 <label>連絡事項</label>
 <textarea id="note"></textarea>
-
 </div>
 
 <h3>📜 自分の日報</h3>
@@ -141,11 +71,9 @@ input, textarea, select {
 <script>
 let userId = "";
 let allData = [];
-
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwMdAtJsGsYC3dwjD8OIuKyQZJ-5-y4_wnupibRZ8rX05hors3yrt3exHNqxe_vVHXUPg/exec";
 
 window.onload = async () => {
-
   await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
   if (!liff.isLoggedIn()) {
@@ -156,8 +84,8 @@ window.onload = async () => {
   const profile = await liff.getProfile();
   userId = profile.userId;
 
-  name.value = profile.displayName;
-  date.value = new Date().toISOString().split('T')[0];
+  document.getElementById("name").value = profile.displayName;
+  document.getElementById("date").value = new Date().toISOString().split('T')[0];
 
   loadMyData();
 };
@@ -165,11 +93,6 @@ window.onload = async () => {
 
 // ===== 送信 =====
 function sendData() {
-
-  const btn = document.querySelector(".submit");
-  btn.disabled = true;
-  btn.innerText = "送信中...";
-
   fetch(GAS_URL, {
     method:"POST",
     headers:{ "Content-Type":"application/json" },
@@ -188,37 +111,16 @@ function sendData() {
   });
 
   alert("送信しました 👍");
-
-  // 入力クリア
-  start.value = "";
-  end.value = "";
-  site.value = "";
-  work.value = "";
-  note.value = "";
-
-  btn.disabled = false;
-  btn.innerText = "送信する";
-
   loadMyData();
 }
 
 
-// ===== 一覧取得 =====
+// ===== 一覧 =====
 async function loadMyData() {
-
-  const res = await fetch(
-    GAS_URL + "?mode=myList&userId=" + userId
-  );
-
+  const res = await fetch(`${GAS_URL}?mode=myList&userId=${userId}`);
   const json = await res.json();
 
-  if (!json.data) {
-    myList.innerHTML = "データ取得失敗";
-    return;
-  }
-
-  allData = json.data;
-
+  allData = json.data || [];
   render();
 }
 
@@ -249,14 +151,14 @@ function render() {
           状態：${d.status}
         </div>
 
-        ${d.status !== "承認" ? 
-          `<button class="btn edit" onclick="editMy('${d.id}')">修正</button>` 
+        ${d.status !== "承認"
+          ? `<button class="btn edit" onclick="editMy('${d.id}')">修正</button>`
           : ""}
       </div>
     `;
   });
 
-  myList.innerHTML = html || "データなし";
+  document.getElementById("myList").innerHTML = html || "データなし";
 }
 
 
@@ -265,8 +167,10 @@ function editMy(id) {
 
   const d = allData.find(x => x.id === id);
 
-  const newWork = prompt("作業内容を修正", d.work);
+  const newWork = prompt("作業内容修正", d.work);
   if (newWork === null) return;
+
+  const newNote = prompt("連絡事項修正", d.note);
 
   fetch(GAS_URL, {
     method:"POST",
@@ -275,6 +179,7 @@ function editMy(id) {
       mode:"update",
       id:id,
       work:newWork,
+      note:newNote,
       userId:userId
     })
   });
@@ -282,7 +187,6 @@ function editMy(id) {
   alert("更新しました 👍");
   loadMyData();
 }
-
 </script>
 
 </body>
