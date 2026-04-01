@@ -93,45 +93,36 @@ window.onload = async () => {
 async function sendData() {
 
   const btn = document.querySelector(".submit");
-
   btn.disabled = true;
   btn.innerText = "送信中...";
 
   try {
 
+    const formData = new URLSearchParams();
+
+    formData.append("mode", "save");
+    formData.append("date", date.value);
+    formData.append("name", name.value);
+    formData.append("type", type.value);
+    formData.append("start", start.value);
+    formData.append("end", end.value);
+    formData.append("site", site.value);
+    formData.append("work", work.value);
+    formData.append("note", note.value);
+    formData.append("userId", userId);
+
     const res = await fetch(GAS_URL, {
       method: "POST",
-
-      // 🔥 これ必須（これないとGASで受け取れない）
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        mode: "save",
-        date: date.value,
-        name: name.value,
-        type: type.value,
-        start: start.value,
-        end: end.value,
-        site: site.value,
-        work: work.value,
-        note: note.value,
-        userId: userId
-      })
+      body: formData
     });
 
-    // 🔥 レスポンス確認（超重要）
     const json = await res.json();
-    console.log("GASレスポンス:", json);
+    console.log(json);
 
     if (json.status === "OK") {
       alert("送信成功 👍");
-
-      // 入力クリア
       work.value = "";
       note.value = "";
-
     } else {
       alert("保存失敗：" + json.message);
     }
