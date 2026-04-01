@@ -3,92 +3,112 @@
 <head>
 <meta charset="utf-8">
 <title>日報管理</title>
+
+<style>
+body { font-family:-apple-system; background:#f0f2f5; }
+.card {
+  background:white;
+  margin:10px;
+  padding:15px;
+  border-radius:10px;
+}
+button {
+  margin-top:5px;
+  padding:8px;
+}
+</style>
 </head>
 
 <body>
 
 <h2>日報管理</h2>
-
-<div id="list"></div>
+<div id="list">読み込み中...</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-const GAS_URL = "あなたのGAS URL";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwMdAtJsGsYC3dwjD8OIuKyQZJ-5-y4_wnupibRZ8rX05hors3yrt3exHNqxe_vVHXUPg/exec";
 
 window.onload = async () => {
 
-  await liff.init({ liffId: "あなたのLIFF ID" });
+  try {
 
-  const profile = await liff.getProfile();
-  userId = profile.userId;
+    await liff.init({ liffId: "2009609532-iEXDl1k3" });
 
-  loadData();
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+
+    loadData();
+
+  } catch(e) {
+    alert("初期化エラー");
+  }
 };
 
 async function loadData() {
 
-  const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
-  const json = await res.json();
+  try {
 
-  let html = "";
+    const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
+    const json = await res.json();
 
-  json.data.forEach(d => {
+    console.log(json); // ← デバッグ
 
-    html += `
-      <div>
-        ${d.name} ${d.date}<br>
-        ${d.start}〜${d.end}<br>
-        🏢 ${d.site}<br>
-        ${d.work}<br>
-        ${d.status}<br>
+    if (!json.data) {
+      document.getElementById("list").innerHTML = "データ取得失敗";
+      return;
+    }
 
-        <button onclick="approve(${d.row})">承認</button>
-        <button onclick="reject(${d.row})">差戻し</button>
-      </div><hr>
-    `;
-  });
+    let html = "";
 
-  document.getElementById("list").innerHTML = html;
+    json.data.forEach(d => {
+
+      html += `
+        <div class="card">
+          <b>${d.name}</b><br>
+          ${d.date}<br>
+          ${d.start}〜${d.end}<br>
+          🏢 ${d.site}<br>
+          ${d.work}<br>
+          状態：${d.status}<br>
+
+          <button onclick="approve(${d.row})">承認</button>
+          <button onclick="reject(${d.row})">差戻し</button>
+        </div>
+      `;
+    });
+
+    document.getElementById("list").innerHTML = html || "データなし";
+
+  } catch (e) {
+    document.getElementById("list").innerHTML = "通信エラー";
+  }
 }
 
+
+// 承認
 async function approve(row) {
   await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({ mode:"approve", row })
+    method:"POST",
+    body:JSON.stringify({ mode:"approve", row })
   });
   loadData();
 }
 
+// 差戻し
 async function reject(row) {
   await fetch(GAS_URL, {
-    method: "POST",
-    body: JSON.stringify({ mode:"reject", row })
+    method:"POST",
+    body:JSON.stringify({ mode:"reject", row })
   });
   loadData();
 }
-</script>
-
-</body>
-</html>
-});
-  loadData();
-}
-
-
-// ===== 差戻し =====
-async function reject(row) {
-  await fetch(GAS_URL, {
-  method: "POST",
-  body: JSON.stringify({
-    mode: "reject",
-    id: d.id
-  })
-});
-  loadData();
-}
-
 </script>
 
 </body>
