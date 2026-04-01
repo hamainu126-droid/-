@@ -2,41 +2,113 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>作業日報</title>
+<title>日報入力</title>
+
+<style>
+body {
+  margin:0;
+  font-family:-apple-system;
+  background:#f0f2f5;
+}
+
+.header {
+  background:#06C755;
+  color:white;
+  text-align:center;
+  padding:15px;
+  font-size:18px;
+}
+
+.container {
+  padding:15px;
+}
+
+.card {
+  background:white;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:15px;
+}
+
+label {
+  font-size:12px;
+  color:#666;
+}
+
+input, select, textarea {
+  width:100%;
+  padding:10px;
+  margin-top:5px;
+  margin-bottom:10px;
+  border-radius:8px;
+  border:1px solid #ccc;
+}
+
+button {
+  width:100%;
+  padding:15px;
+  background:#06C755;
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-size:16px;
+}
+</style>
 </head>
 
 <body>
 
-<h2>作業日報</h2>
+<div class="header">📋 日報入力</div>
 
-<input type="date" id="date"><br>
-<input type="text" id="name" placeholder="氏名"><br>
+<div class="container">
 
+<div class="card">
+<label>日付</label>
+<input type="date" id="date">
+
+<label>氏名</label>
+<input type="text" id="name">
+
+<label>勤務区分</label>
 <select id="type">
 <option>昼勤</option>
 <option>夜勤</option>
 <option>休日</option>
-</select><br>
+</select>
+</div>
 
-<input type="time" id="start"><br>
-<input type="time" id="end"><br>
+<div class="card">
+<label>開始時間</label>
+<input type="time" id="start">
 
-<input type="text" id="site" placeholder="現場名"><br>
+<label>終了時間</label>
+<input type="time" id="end">
 
-<textarea id="work" placeholder="作業内容"></textarea><br>
-<textarea id="note" placeholder="連絡事項"></textarea><br>
+<label>現場名</label>
+<input type="text" id="site">
+</div>
+
+<div class="card">
+<label>作業内容</label>
+<textarea id="work"></textarea>
+
+<label>連絡事項</label>
+<textarea id="note"></textarea>
+</div>
 
 <button onclick="sendData()">送信</button>
+
+</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-const GAS_URL = "あなたのGAS URL";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwMdAtJsGsYC3dwjD8OIuKyQZJ-5-y4_wnupibRZ8rX05hors3yrt3exHNqxe_vVHXUPg/exec";
 
 window.onload = async () => {
 
-  await liff.init({ liffId: "あなたのLIFF ID" });
+  await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
   if (!liff.isLoggedIn()) {
     liff.login();
@@ -52,6 +124,10 @@ window.onload = async () => {
 };
 
 function sendData() {
+
+  const btn = document.querySelector("button");
+  btn.disabled = true;
+  btn.innerText = "送信中...";
 
   const data = {
     mode: "save",
