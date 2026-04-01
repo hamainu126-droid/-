@@ -94,6 +94,8 @@ window.onload = async () => {
 
     await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
+    alert("init OK");
+
     if (!liff.isLoggedIn()) {
       liff.login();
       return;
@@ -105,6 +107,8 @@ window.onload = async () => {
     //  return;
    // }
 
+    alert("getProfile前");
+    
     const profile = await liff.getProfile();
 
     console.log("profile:", profile);
@@ -126,9 +130,10 @@ window.onload = async () => {
 
     loadList();
 
-  } catch (e) {
-    alert("LIFFエラー：" + e.message);
-  }
+  } 
+  catch (e) {
+  alert("LIFFエラー：" + JSON.stringify(e));
+}
 };
 
 
