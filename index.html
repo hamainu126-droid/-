@@ -79,8 +79,13 @@ window.onload = async () => {
     return;
   }
 
+  try {
   const profile = await liff.getProfile();
   userId = profile.userId;
+  console.log("userId:", userId);
+} catch (e) {
+  alert("ユーザー情報取得失敗");
+}
 
   const nameEl = document.getElementById("name");
   const dateEl = document.getElementById("date");
