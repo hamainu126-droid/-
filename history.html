@@ -8,29 +8,28 @@
 <style>
 body { margin:0; font-family:-apple-system; background:#f5f5f5; }
 .header { background:#06C755; color:white; text-align:center; padding:16px; }
-.container { padding:15px; padding-bottom:80px; }
-.card { background:white; border-radius:16px; padding:15px; margin-bottom:15px; }
-.status { font-size:12px; margin-top:5px; }
-.ok { color:#06C755; } .ng { color:#ff4444; } .wait { color:#ff9800; }
-.btn { width:100%; padding:10px; border:none; border-radius:10px; margin-top:10px; }
-.edit { background:#2196F3; color:white; }
-.back { background:#06C755; color:white; }
+.container { padding:10px; }
+.card {
+  background:white;
+  border-radius:12px;
+  padding:10px;
+  margin-bottom:10px;
+}
+.btn {
+  width:100%;
+  padding:10px;
+  background:#2196F3;
+  color:white;
+  border:none;
+  border-radius:8px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">📜 日報履歴</div>
-
-<div class="container">
-
-<a href="index.html">
-<button class="btn back">入力に戻る</button>
-</a>
-
-<div id="list">読み込み中...</div>
-
-</div>
+<div class="header">📋 日報履歴</div>
+<div class="container" id="list">読み込み中...</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
@@ -38,83 +37,11 @@ body { margin:0; font-family:-apple-system; background:#f5f5f5; }
 let userId = "";
 let allData = [];
 
-const GAS_URL = "<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>日報入力</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<style>
-body { margin:0; font-family:-apple-system; background:#f5f5f5; }
-.header { background:#06C755; color:white; text-align:center; padding:16px; font-size:18px; }
-.container { padding:15px; padding-bottom:80px; }
-.card { background:white; border-radius:16px; padding:15px; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
-label { font-size:12px; color:#888; }
-input, textarea, select {
-  width:100%; padding:12px; margin-top:5px; margin-bottom:12px;
-  border-radius:10px; border:1px solid #ddd;
-}
-.btn { width:100%; padding:14px; border:none; border-radius:12px; font-weight:bold; }
-.submit { background:#06C755; color:white; }
-.linkBtn { margin-top:10px; background:#2196F3; color:white; }
-.footer { position:fixed; bottom:0; width:100%; padding:10px; background:white; }
-</style>
-</head>
-
-<body>
-
-<div class="header">📋 日報入力</div>
-
-<div class="container">
-<div class="card">
-
-<label>日付</label>
-<input type="date" id="date">
-
-<label>氏名</label>
-<input type="text" id="name">
-
-<label>勤務区分</label>
-<select id="type">
-<option>昼勤</option>
-<option>夜勤</option>
-<option>休日</option>
-</select>
-
-<label>開始</label>
-<input type="time" id="start">
-
-<label>終了</label>
-<input type="time" id="end">
-
-<label>現場名</label>
-<input type="text" id="site">
-
-<label>作業内容</label>
-<textarea id="work"></textarea>
-
-<label>連絡事項</label>
-<textarea id="note"></textarea>
-
-<button class="btn submit" onclick="sendData()">送信する</button>
-
-<a href="history.html">
-<button class="btn linkBtn">履歴を見る</button>
-</a>
-
-</div>
-</div>
-
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-
-<script>
-let userId = "";
 const GAS_URL = "https://script.google.com/macros/s/AKfycby7EwA82TETp7Mvx7Fad5tGW-1SerOQV0OUP5U_suXTE0NQjsphzpk16-xnIk1HOdCtgA/exec";
 
 window.onload = async () => {
 
-  await liff.init({ liffId: "2009609532-pYjsxOfo" });
+  await liff.init({ liffId: "2009609532-jTN2z4s0" });
 
   if (!liff.isLoggedIn()) {
     liff.login();
@@ -124,64 +51,69 @@ window.onload = async () => {
   const profile = await liff.getProfile();
   userId = profile.userId;
 
-  name.value = profile.displayName;
-  date.value = new Date().toISOString().split('T')[0];
+  loadData();
 };
 
+// ===== データ取得 =====
+async function loadData() {
 
-// ===== 送信 =====
-async function sendData() {
+  const res = await fetch(`${GAS_URL}?mode=myList&userId=${userId}`);
+  const json = await res.json();
 
-  const btn = document.querySelector(".submit");
+  allData = json.data || [];
 
-  btn.disabled = true;
-  btn.innerText = "送信中...";
+  render();
+}
 
-  try {
+// ===== 表示 =====
+function render() {
 
-    const res = await fetch(GAS_URL, {
-      method: "POST",
+  let html = "";
 
-      // 🔥 これ必須（これないとGASで受け取れない）
-      headers: {
-        "Content-Type": "application/json"
-      },
+  allData.forEach(d => {
 
-      body: JSON.stringify({
-        mode: "save",
-        date: date.value,
-        name: name.value,
-        type: type.value,
-        start: start.value,
-        end: end.value,
-        site: site.value,
-        work: work.value,
-        note: note.value,
-        userId: userId
-      })
-    });
+    html += `
+      <div class="card">
+        📅 ${d.date}<br>
+        ⏰ ${d.start}〜${d.end}<br>
+        📍 ${d.site}<br>
+        📝 ${d.work}<br>
+        📩 ${d.note || "なし"}<br>
+        状態：${d.status}<br><br>
 
-    // 🔥 レスポンス確認（超重要）
-    const json = await res.json();
-    console.log("GASレスポンス:", json);
+        <button class="btn" onclick="edit('${d.id}')">修正</button>
+      </div>
+    `;
+  });
 
-    if (json.status === "OK") {
-      alert("送信成功 👍");
+  document.getElementById("list").innerHTML = html || "データなし";
+}
 
-      // 入力クリア
-      work.value = "";
-      note.value = "";
+// ===== 修正 =====
+function edit(id) {
 
-    } else {
-      alert("保存失敗：" + json.message);
-    }
+  const d = allData.find(x => x.id === id);
 
-  } catch (e) {
-    alert("通信エラー：" + e.message);
-  }
+  const newWork = prompt("作業内容修正", d.work);
+  if (newWork === null) return;
 
-  btn.disabled = false;
-  btn.innerText = "送信する";
+  const newNote = prompt("連絡事項修正", d.note);
+
+  const params = new URLSearchParams();
+  params.append("mode", "update");
+  params.append("id", id);
+  params.append("work", newWork);
+  params.append("note", newNote);
+  params.append("userId", userId);
+
+  fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params
+  }).then(() => {
+    alert("更新しました 👍");
+    loadData();
+  });
 }
 </script>
 
