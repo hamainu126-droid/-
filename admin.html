@@ -36,7 +36,7 @@ body { margin:0; font-family:-apple-system; background:#f5f5f5; }
 
 <script>
 let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycby7EwA82TETp7Mvx7Fad5tGW-1SerOQV0OUP5U_suXTE0NQjsphzpk16-xnIk1HOdCtgA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbznp4gpuSi37RpOQPkLnwTkW52-KP4jFQKUMYz-7h1-4gB4dDV5v9dZqzy-ALayjBwp/exec";
 
 window.onload = async () => {
 
@@ -56,15 +56,18 @@ window.onload = async () => {
 // ===== データ取得 =====
 async function loadData() {
 
-  const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
-  const json = await res.json();
+  const res = await fetch(url);
+const text = await res.text();
 
-  if (json.status !== "OK") {
-    document.getElementById("list").innerText = "権限なし";
-    return;
-  }
+console.log("レスポンス:", text);
 
-  render(json.data);
+let json;
+try {
+  json = JSON.parse(text);
+} catch (e) {
+  document.getElementById("list").innerText = "データ取得エラー";
+  return;
+}
 }
 
 // ===== 表示 =====
