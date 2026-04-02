@@ -70,7 +70,7 @@ input, textarea, select {
 
   <script>
 let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwa2StjLTn-M9hmtGdtrdO6aGXdIQFrnLE4kk9ooqensdEb9M7LOMp60-rdP-DFuFmltA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycby7EwA82TETp7Mvx7Fad5tGW-1SerOQV0OUP5U_suXTE0NQjsphzpk16-xnIk1HOdCtgA/exec";
 
 window.onload = async () => {
 
@@ -95,57 +95,35 @@ window.onload = async () => {
 // ===== 送信 =====
 async function sendData() {
 
-  const btn = document.querySelector(".submit");
+  const params = new URLSearchParams();
 
-  const nameEl = document.getElementById("name");
-  const dateEl = document.getElementById("date");
-  const typeEl = document.getElementById("type");
-  const startEl = document.getElementById("start");
-  const endEl = document.getElementById("end");
-  const siteEl = document.getElementById("site");
-  const workEl = document.getElementById("work");
-  const noteEl = document.getElementById("note");
+  params.append("mode", "save");
+  params.append("date", date.value);
+  params.append("name", name.value);
+  params.append("type", type.value);
+  params.append("start", start.value);
+  params.append("end", end.value);
+  params.append("site", site.value);
+  params.append("work", work.value);
+  params.append("note", note.value);
+  params.append("userId", userId);
 
-  btn.disabled = true;
-  btn.innerText = "送信中...";
+  const res = await fetch(GAS_URL, {
+    method: "POST",
 
-  try {
+    // 🔥 JSON禁止！！
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
 
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        mode: "save",
-        date: dateEl.value,
-        name: nameEl.value,
-        type: typeEl.value,
-        start: startEl.value,
-        end: endEl.value,
-        site: siteEl.value,
-        work: workEl.value,
-        note: noteEl.value,
-        userId: userId
-      })
-    });
+    body: params
+  });
 
-    const json = await res.json();
-    console.log(json);
-
-    if (json.status === "OK") {
-      alert("送信成功 👍");
-    } else {
-      alert("保存失敗：" + json.message);
-    }
-
-  } catch (e) {
-    alert("通信エラー：" + e.message);
-  }
-
-  btn.disabled = false;
-  btn.innerText = "送信する";
+  const json = await res.json();
+  console.log(json);
 }
+
+  
 </script>
 
 </body>
