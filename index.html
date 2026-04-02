@@ -122,7 +122,19 @@ async function sendData() {
   const json = await res.json();
   console.log(json);
 }
+if (json.status === "OK") {
+  alert("送信成功 👍");
 
+  // 入力クリア（任意）
+  work.value = "";
+  note.value = "";
+
+  // 🔥 LINE画面を閉じる
+  liff.closeWindow();
+
+} else {
+  alert("保存失敗：" + json.message);
+}
   
 </script>
 
