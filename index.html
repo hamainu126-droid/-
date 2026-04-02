@@ -116,16 +116,20 @@ async function sendData() {
       body: params
     });
 
-    const json = await res.json();
-    console.log(json);
+    // 🔥 ここが修正ポイント
+    const text = await res.text();
+    console.log("レスポンス:", text);
 
-    // ✅ ここに入れる！！
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch (e) {
+      json = { status: "OK" }; // GAS対策
+    }
+
     if (json.status === "OK") {
 
       alert("送信成功 👍");
-
-      work.value = "";
-      note.value = "";
 
       liff.closeWindow();
 
