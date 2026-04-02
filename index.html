@@ -108,32 +108,36 @@ async function sendData() {
   params.append("note", note.value);
   params.append("userId", userId);
 
-  const res = await fetch(GAS_URL, {
-    method: "POST",
+  try {
 
-    // 🔥 JSON禁止！！
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: params
+    });
 
-    body: params
-  });
+    const json = await res.json();
+    console.log(json);
 
-  const json = await res.json();
-  console.log(json);
-}
-if (json.status === "OK") {
-  alert("送信成功 👍");
+    // ✅ ここに入れる！！
+    if (json.status === "OK") {
 
-  // 入力クリア（任意）
-  work.value = "";
-  note.value = "";
+      alert("送信成功 👍");
 
-  // 🔥 LINE画面を閉じる
-  liff.closeWindow();
+      work.value = "";
+      note.value = "";
 
-} else {
-  alert("保存失敗：" + json.message);
+      liff.closeWindow();
+
+    } else {
+      alert("保存失敗：" + json.message);
+    }
+
+  } catch (e) {
+    alert("通信エラー：" + e.message);
+  }
 }
   
 </script>
