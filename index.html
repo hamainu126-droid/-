@@ -2,156 +2,161 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>日報履歴</title>
+<title>日報入力</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
 body { margin:0; font-family:-apple-system; background:#f5f5f5; }
-.header { background:#06C755; color:white; text-align:center; padding:16px; }
-.container { padding:10px; }
-.card {
-  background:white;
-  border-radius:12px;
-  padding:12px;
-  margin-bottom:10px;
+.header { background:#06C755; color:white; text-align:center; padding:16px; font-size:18px; }
+.container { padding:15px; padding-bottom:100px; }
+.card { background:white; border-radius:16px; padding:15px; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
+label { font-size:12px; color:#888; }
+input, textarea, select {
+  width:100%; padding:12px; margin-top:5px; margin-bottom:12px;
+  border-radius:10px; border:1px solid #ddd;
 }
 .btn {
   width:100%;
-  padding:10px;
-  background:#2196F3;
-  color:white;
+  padding:14px;
   border:none;
-  border-radius:8px;
+  border-radius:12px;
+  font-weight:bold;
 }
-.gray {
-  color:#aaa;
-  font-size:12px;
+.submit { background:#06C755; color:white; }
+.history { background:#2196F3; color:white; margin-top:10px; }
+
+.footer {
+  position:fixed;
+  bottom:0;
+  width:100%;
+  padding:10px;
+  background:white;
+  box-shadow:0 -2px 6px rgba(0,0,0,0.1);
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">📋 日報履歴</div>
-<div class="container" id="list">読み込み中...</div>
+<div class="header">📋 日報入力</div>
+
+<div class="container">
+<div class="card">
+
+<label>日付</label>
+<input type="date" id="date">
+
+<label>氏名</label>
+<input type="text" id="name">
+
+<label>勤務区分</label>
+<select id="type">
+<option>昼勤</option>
+<option>夜勤</option>
+<option>休日</option>
+</select>
+
+<label>開始</label>
+<input type="time" id="start">
+
+<label>終了</label>
+<input type="time" id="end">
+
+<label>現場名</label>
+<input type="text" id="site">
+
+<label>作業内容</label>
+<textarea id="work"></textarea>
+
+<label>連絡事項</label>
+<textarea id="note"></textarea>
+
+</div>
+</div>
+
+<div class="footer">
+  <button class="btn submit" onclick="sendData()">送信する</button>
+  <button class="btn history" onclick="goHistory()">履歴を見る</button>
+</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-let allData = []; // ★重要
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw_cFM4XsN3XjdoDqsWaGZ8uetNIyjSetJj_tCg9feKcllig_FwnBRHHKDTKUV_ooSaGg/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxndnFW3VlV3rlAHsDQSjR_bVnJDoXX88dKnV62JPEy9SmDIAr-R1efiDmvKy6CSPFLyw/exec";
 
+// ===== 初期化 =====
 window.onload = async () => {
-
-  await liff.init({ liffId: "2009609532-jTN2z4s0" });
-
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
-
-  const profile = await liff.getProfile();
-  userId = profile.userId;
-
-  loadData();
-};
-
-// ===== データ取得 =====
-async function loadData() {
 
   try {
 
-    const res = await fetch(`${GAS_URL}?mode=myList&userId=${userId}`);
-    const text = await res.text();
+    await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
-    console.log("レスポンス:", text);
-
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      document.getElementById("list").innerText = "データ形式エラー";
+    if (!liff.isLoggedIn()) {
+      liff.login();
       return;
     }
 
-    // ★ここで保存（重要）
-    allData = (json.data || []).reverse(); // 新しい順
+    const profile = await liff.getProfile();
+    userId = profile.userId;
 
-    render();
+    document.getElementById("name").value = profile.displayName;
+    document.getElementById("date").value = new Date().toISOString().split('T')[0];
 
   } catch (e) {
-    console.log(e);
-    document.getElementById("list").innerText = "通信エラー";
+
+    console.log("LIFFエラー:", e);
+
+    // fallback（開発用）
+    userId = "debug-user";
+    document.getElementById("name").value = "テストユーザー";
+    document.getElementById("date").value = new Date().toISOString().split('T')[0];
   }
-}
-
-// ===== 表示 =====
-function render() {
-
-  let html = "";
-
-  allData.forEach(d => {
-
-    html += `
-      <div class="card">
-        📅 ${d.date}<br>
-        ⏰ ${d.start}〜${d.end}<br>
-        📍 ${d.site || "-"}<br>
-        📝 ${d.work || "-"}<br>
-        📩 ${d.note || "なし"}<br>
-        状態：${d.status}<br><br>
-
-        ${
-          d.status === "未承認"
-            ? `<button class="btn" onclick="edit('${d.id}')">修正</button>`
-            : `<div class="gray">※承認済みのため編集不可</div>`
-        }
-      </div>
-    `;
-  });
-
-  document.getElementById("list").innerHTML = html || "データなし";
-}
-
-// ===== 編集 =====
-window.edit = function(id) {
-
-  const d = allData.find(x => x.id === id);
-
-  if (!d) {
-    alert("データ取得エラー");
-    return;
-  }
-
-  if (d.status !== "未承認") {
-    alert("編集できません");
-    return;
-  }
-
-  const newWork = prompt("作業内容を修正", d.work || "");
-  if (newWork === null) return;
-
-  const newNote = prompt("連絡事項を修正", d.note || "");
-
-  const params = new URLSearchParams();
-  params.append("mode", "update");
-  params.append("id", id);
-  params.append("work", newWork);
-  params.append("note", newNote);
-  params.append("userId", userId);
-
-  fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params
-  }).then(() => {
-    alert("更新しました 👍");
-    loadData();
-  });
 };
 
+// ===== 送信 =====
+async function sendData() {
+
+  const params = new URLSearchParams();
+
+  params.append("mode", "save");
+  params.append("date", date.value);
+  params.append("name", name.value);
+  params.append("type", type.value);
+  params.append("start", start.value);
+  params.append("end", end.value);
+  params.append("site", site.value);
+  params.append("work", work.value);
+  params.append("note", note.value);
+  params.append("userId", userId);
+
+  try {
+
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      body: params
+    });
+
+    const text = await res.text();
+    console.log("レスポンス:", text);
+
+    alert("送信成功 👍");
+
+    liff.closeWindow();
+
+  } catch (e) {
+    alert("通信エラー：" + e.message);
+  }
+}
+
+// ===== 履歴へ =====
+function goHistory() {
+  location.href = "history.html";
+}
 </script>
 
 </body>
