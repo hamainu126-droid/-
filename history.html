@@ -130,6 +130,8 @@ window.edit = function(id) {
     return;
   }
 
+　const newWork = prompt("現場名を修正", d.site || "");
+  
   const newWork = prompt("作業内容を修正", d.work || "");
   if (newWork === null) return;
 
