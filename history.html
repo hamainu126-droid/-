@@ -41,7 +41,7 @@ body { margin:0; font-family:-apple-system; background:#f5f5f5; }
 let userId = "";
 let allData = []; // ★重要
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxndnFW3VlV3rlAHsDQSjR_bVnJDoXX88dKnV62JPEy9SmDIAr-R1efiDmvKy6CSPFLyw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbyVa2g5KgA3vY4friv1t4BAc0Akxo4xadumMj_U49zeRI7jwt0Jk0w709S7cBCjPpOvRw/exec";
 
 window.onload = async () => {
 
@@ -130,8 +130,9 @@ window.edit = function(id) {
     return;
   }
 
-　const newWork = prompt("現場名を修正", d.site || "");
-  
+  const newSite = prompt("現場名を修正", d.site || "");
+  if (newSite === null) return;
+
   const newWork = prompt("作業内容を修正", d.work || "");
   if (newWork === null) return;
 
@@ -140,6 +141,7 @@ window.edit = function(id) {
   const params = new URLSearchParams();
   params.append("mode", "update");
   params.append("id", id);
+  params.append("site", newSite); // ←追加
   params.append("work", newWork);
   params.append("note", newNote);
   params.append("userId", userId);
@@ -153,7 +155,7 @@ window.edit = function(id) {
     loadData();
   });
 };
-
+  
 </script>
 
 </body>
