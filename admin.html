@@ -113,7 +113,7 @@ function render(data) {
 
     html += `
       <div class="card">
-        <b>${d.name}</b><br>
+        <b>${d.name || "名無し"}</b>
         📅 ${d.date}<br>
         ⏰ ${d.start}〜${d.end}<br>
         📍 ${d.site}<br>
