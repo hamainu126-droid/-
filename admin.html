@@ -77,6 +77,32 @@ async function loadData() {
   } catch {
     document.getElementById("list").innerText = "通信エラー";
   }
+}async function loadData() {
+
+  try {
+
+    const res = await fetch(`${GAS_URL}?mode=myList&userId=${userId}`);
+    const text = await res.text();
+
+    console.log("レスポンス:", text);
+
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      document.getElementById("list").innerText = "データ形式エラー";
+      return;
+    }
+
+    render(json.data || []);
+
+  } catch (e) {
+
+    console.log("エラー詳細:", e);
+
+    // 👇 ここ変更
+    document.getElementById("list").innerText = "通信は成功している可能性あり（CORS）";
+  }
 }
 
 function render(data) {
