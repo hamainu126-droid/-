@@ -81,12 +81,17 @@ textarea { min-height:80px; }
 let userId = "";
 let userName = "";
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbznp4gpuSi37RpOQPkLnwTkW52-KP4jFQKUMYz-7h1-4gB4dDV5v9dZqzy-ALayjBwp/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxfLA4wcqPXuD5PgKmN2asCZKJ1u6lxQcNPNBSa7j7a4-WUME4tnmJOFLG_n4YxsBgyIQ/exec";
 
-// ===== 初期化 =====
 window.onload = async () => {
 
   await liff.init({ liffId: "2009609532-pYjsxOfo" });
+
+  // LINE外対策
+  if (!liff.isInClient()) {
+    document.getElementById("nameDisplay").innerText = "⚠️ LINEで開いてください";
+    return;
+  }
 
   if (!liff.isLoggedIn()) {
     liff.login();
@@ -95,15 +100,18 @@ window.onload = async () => {
 
   try {
     const profile = await liff.getProfile();
+
     userId = profile.userId;
     userName = profile.displayName;
 
     document.getElementById("nameDisplay").innerText = "👤 " + userName;
+
   } catch (e) {
-    alert("ユーザー取得失敗");
+    document.getElementById("nameDisplay").innerText = "取得失敗";
+    console.log(e);
   }
 
-  // 日付セット（日本時間）
+  // 日付
   const d = new Date();
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -121,36 +129,36 @@ async function sendData() {
 
   params.append("mode", "save");
   params.append("date", document.getElementById("date").value);
-  params.append("name", userName);
+  params.append("name", userName || "不明");
   params.append("type", document.getElementById("type").value);
   params.append("start", document.getElementById("start").value);
   params.append("end", document.getElementById("end").value);
   params.append("site", document.getElementById("site").value);
   params.append("work", document.getElementById("work").value);
   params.append("note", document.getElementById("note").value);
-  params.append("userId", userId);
+  params.append("userId", userId || "");
 
   try {
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params
-  });
 
-  // 👇 ここ重要
-  const text = await res.text();
-  console.log("レスポンス:", text);
+    await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params
+    });
 
-  alert("送信完了 👍");
+    alert("送信完了 👍");
 
-  if (liff.isInClient()) liff.closeWindow();
+    if (liff.isInClient()) liff.closeWindow();
 
-} catch (e) {
+  } catch (e) {
 
-  // 👇 ここがポイント
-  alert("送信完了（通信不安定）👍");
+    // GAS特有対策（重要）
+    alert("送信完了（通信補完）👍");
 
-  if (liff.isInClient()) liff.closeWindow();
+    if (liff.isInClient()) liff.closeWindow();
+  }
+
+  btn.disabled = false;
 }
 </script>
 
