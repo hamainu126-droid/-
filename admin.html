@@ -53,11 +53,15 @@ window.onload = async () => {
   loadData();
 };
 
+// ===== 管理用データ取得（これ1つだけ！）
 async function loadData() {
 
   try {
+
     const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
     const text = await res.text();
+
+    console.log("レスポンス:", text);
 
     let json;
     try {
@@ -72,39 +76,16 @@ async function loadData() {
       return;
     }
 
-    render(json.data);
-
-  } catch {
-    document.getElementById("list").innerText = "通信エラー";
-  }
-}async function loadData() {
-
-  try {
-
-    const res = await fetch(`${GAS_URL}?mode=myList&userId=${userId}`);
-    const text = await res.text();
-
-    console.log("レスポンス:", text);
-
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      document.getElementById("list").innerText = "データ形式エラー";
-      return;
-    }
-
     render(json.data || []);
 
   } catch (e) {
 
-    console.log("エラー詳細:", e);
-
-    // 👇 ここ変更
-    document.getElementById("list").innerText = "通信は成功している可能性あり（CORS）";
+    console.log("エラー:", e);
+    document.getElementById("list").innerText = "通信エラー";
   }
 }
 
+// ===== 表示
 function render(data) {
 
   let html = "";
@@ -113,7 +94,7 @@ function render(data) {
 
     html += `
       <div class="card">
-        <b>${d.name || "名無し"}</b>
+        <b>${d.name || "名無し"}</b><br>
         📅 ${d.date}<br>
         ⏰ ${d.start}〜${d.end}<br>
         📍 ${d.site}<br>
@@ -126,9 +107,10 @@ function render(data) {
     `;
   });
 
-  document.getElementById("list").innerHTML = html;
+  document.getElementById("list").innerHTML = html || "データなし";
 }
 
+// ===== 承認・差戻し
 function update(id, status) {
 
   const params = new URLSearchParams();
@@ -143,6 +125,5 @@ function update(id, status) {
   }).then(() => loadData());
 }
 </script>
-
 </body>
 </html>
