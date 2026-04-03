@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>日報履歴</title>
+<title>履歴</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -12,31 +12,22 @@ body { margin:0; font-family:-apple-system; background:#f5f5f5; }
 .card {
   background:white;
   border-radius:12px;
-  padding:10px;
+  padding:12px;
   margin-bottom:10px;
-}
-.btn {
-  width:100%;
-  padding:10px;
-  background:#2196F3;
-  color:white;
-  border:none;
-  border-radius:8px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">📋 日報履歴</div>
+<div class="header">📋 履歴</div>
 <div class="container" id="list">読み込み中...</div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-let allData = [];
-
 const GAS_URL = "https://script.google.com/macros/s/AKfycbznp4gpuSi37RpOQPkLnwTkW52-KP4jFQKUMYz-7h1-4gB4dDV5v9dZqzy-ALayjBwp/exec";
 
 window.onload = async () => {
@@ -48,41 +39,43 @@ window.onload = async () => {
     return;
   }
 
-try {
   const profile = await liff.getProfile();
   userId = profile.userId;
-  console.log("userId:", userId);
-} catch (e) {
-  alert("ユーザー情報取得失敗");
-}
 
   loadData();
 };
 
-// ===== データ取得 =====
 async function loadData() {
 
-  const res = await fetch(url);
-const text = await res.text();
+  try {
+    const res = await fetch(`${GAS_URL}?mode=myList&userId=${userId}`);
+    const text = await res.text();
 
-console.log("レスポンス:", text);
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      document.getElementById("list").innerText = "データ取得失敗";
+      return;
+    }
 
-let json;
-try {
-  json = JSON.parse(text);
-} catch (e) {
-  document.getElementById("list").innerText = "データ取得エラー";
-  return;
+    render(json.data || []);
+
+  } catch {
+    document.getElementById("list").innerText = "通信エラー";
+  }
 }
-}
 
-// ===== 表示 =====
-function render() {
+function render(data) {
+
+  if (!data.length) {
+    document.getElementById("list").innerText = "データなし";
+    return;
+  }
 
   let html = "";
 
-  allData.forEach(d => {
-
+  data.forEach(d => {
     html += `
       <div class="card">
         📅 ${d.date}<br>
@@ -90,41 +83,12 @@ function render() {
         📍 ${d.site}<br>
         📝 ${d.work}<br>
         📩 ${d.note || "なし"}<br>
-        状態：${d.status}<br><br>
-
-        <button class="btn" onclick="edit('${d.id}')">修正</button>
+        状態：${d.status}
       </div>
     `;
   });
 
-  document.getElementById("list").innerHTML = html || "データなし";
-}
-
-// ===== 修正 =====
-function edit(id) {
-
-  const d = allData.find(x => x.id === id);
-
-  const newWork = prompt("作業内容修正", d.work);
-  if (newWork === null) return;
-
-  const newNote = prompt("連絡事項修正", d.note);
-
-  const params = new URLSearchParams();
-  params.append("mode", "update");
-  params.append("id", id);
-  params.append("work", newWork);
-  params.append("note", newNote);
-  params.append("userId", userId);
-
-  fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params
-  }).then(() => {
-    alert("更新しました 👍");
-    loadData();
-  });
+  document.getElementById("list").innerHTML = html;
 }
 </script>
 
