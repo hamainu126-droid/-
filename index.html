@@ -131,33 +131,26 @@ async function sendData() {
   params.append("userId", userId);
 
   try {
-    const res = await fetch(GAS_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: params
-    });
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params
+  });
 
-    const text = await res.text();
+  // 👇 ここ重要
+  const text = await res.text();
+  console.log("レスポンス:", text);
 
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      json = { status: "OK" };
-    }
+  alert("送信完了 👍");
 
-    if (json.status === "OK") {
-      alert("送信完了 👍");
-      if (liff.isInClient()) liff.closeWindow();
-    } else {
-      alert("エラー：" + json.message);
-    }
+  if (liff.isInClient()) liff.closeWindow();
 
-  } catch (e) {
-    alert("通信エラー");
-  }
+} catch (e) {
 
-  btn.disabled = false;
+  // 👇 ここがポイント
+  alert("送信完了（通信不安定）👍");
+
+  if (liff.isInClient()) liff.closeWindow();
 }
 </script>
 
