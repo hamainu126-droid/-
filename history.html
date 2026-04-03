@@ -83,20 +83,57 @@ function render(data) {
   let html = "";
 
   data.forEach(d => {
-    html += `
-      <div class="card">
-        📅 ${d.date}<br>
-        ⏰ ${d.start}〜${d.end}<br>
-        📍 ${d.site}<br>
-        📝 ${d.work}<br>
-        📩 ${d.note || "なし"}<br>
-        状態：${d.status}
-      </div>
-    `;
+   html += `
+  <div class="card">
+    📅 ${d.date}<br>
+    ⏰ ${d.start}〜${d.end}<br>
+    📍 ${d.site}<br>
+    📝 ${d.work}<br>
+    📩 ${d.note || "なし"}<br>
+    状態：${d.status}<br><br>
+
+   ${d.status === "未承認"
+  ? `<button class="btn" onclick="edit('${d.id}')">修正</button>`
+  : `<span style="color:#aaa;">編集不可</span>`
+}
+  </div>
+`;
   });
 
   document.getElementById("list").innerHTML = html;
 }
+
+function edit(id) {
+
+  const d = allData.find(x => x.id === id);
+
+  if (d.status !== "未承認") {
+    alert("承認済みのため編集できません");
+    return;
+  }
+
+  const newWork = prompt("作業内容を修正", d.work);
+  if (newWork === null) return;
+
+  const newNote = prompt("連絡事項を修正", d.note || "");
+
+  const params = new URLSearchParams();
+  params.append("mode", "update");
+  params.append("id", id);
+  params.append("work", newWork);
+  params.append("note", newNote);
+  params.append("userId", userId);
+
+  fetch(GAS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params
+  }).then(() => {
+    alert("更新しました 👍");
+    loadData();
+  });
+}  
+  
 </script>
 
 </body>
