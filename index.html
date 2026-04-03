@@ -81,12 +81,12 @@ textarea { min-height:80px; }
 let userId = "";
 let userName = "";
 
-const GAS_URL = "YOUR_GAS_URL";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbznp4gpuSi37RpOQPkLnwTkW52-KP4jFQKUMYz-7h1-4gB4dDV5v9dZqzy-ALayjBwp/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
 
-  await liff.init({ liffId: "YOUR_LIFF_ID" });
+  await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
   if (!liff.isLoggedIn()) {
     liff.login();
