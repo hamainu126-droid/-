@@ -84,7 +84,7 @@ input, textarea, select {
 <script>
 let userId = "";
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyVa2g5KgA3vY4friv1t4BAc0Akxo4xadumMj_U49zeRI7jwt0Jk0w709S7cBCjPpOvRw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzyz_1ebVk5jz2vKhKOp0eNeat8hy6a1O6AELd9M-js2TPFaY8fb35N48b5lXxaTWZAkA/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
@@ -132,7 +132,12 @@ async function sendData() {
   params.append("userId", userId);
 
   try {
-
+　
+　if (!name.value) {
+  alert("名前が取得できていません");
+  return;
+}
+    
     const res = await fetch(GAS_URL, {
       method: "POST",
       headers: {
