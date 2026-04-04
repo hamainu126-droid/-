@@ -41,7 +41,7 @@ body { margin:0; font-family:-apple-system; background:#f5f5f5; }
 let userId = "";
 let allData = []; // ★重要
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbyVa2g5KgA3vY4friv1t4BAc0Akxo4xadumMj_U49zeRI7jwt0Jk0w709S7cBCjPpOvRw/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzyz_1ebVk5jz2vKhKOp0eNeat8hy6a1O6AELd9M-js2TPFaY8fb35N48b5lXxaTWZAkA/exec";
 
 window.onload = async () => {
 
@@ -136,7 +136,7 @@ window.edit = function(id) {
   const newWork = prompt("作業内容を修正", d.work || "");
   if (newWork === null) return;
 
-  const newNote = prompt("連絡事項を修正", d.note || "");
+  const newNote = prompt("連絡事項を修正", d.note || "") || "";
 
   const params = new URLSearchParams();
   params.append("mode", "update");
