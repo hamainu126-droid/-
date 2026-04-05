@@ -83,6 +83,8 @@ input, textarea, select {
 
 <script>
 let userId = "";
+let userName = ""; // ← 追加
+let isReady = false; // ← 追加
 
 const GAS_URL = "https://script.google.com/macros/s/AKfycbzyz_1ebVk5jz2vKhKOp0eNeat8hy6a1O6AELd9M-js2TPFaY8fb35N48b5lXxaTWZAkA/exec";
 
@@ -99,19 +101,17 @@ window.onload = async () => {
     }
 
     const profile = await liff.getProfile();
-    userId = profile.userId;
 
-    document.getElementById("name").value = profile.displayName;
+    userId = profile.userId;
+    userName = profile.displayName;
+
+    document.getElementById("name").value = userName;
     document.getElementById("date").value = new Date().toISOString().split('T')[0];
+
+    isReady = true; // ← ここ重要
 
   } catch (e) {
-
-    console.log("LIFFエラー:", e);
-
-    // fallback（開発用）
-    userId = "debug-user";
-    document.getElementById("name").value = "テストユーザー";
-    document.getElementById("date").value = new Date().toISOString().split('T')[0];
+    alert("ユーザー取得失敗：" + e.message);
   }
 };
 
@@ -122,7 +122,7 @@ async function sendData() {
 
   params.append("mode", "save");
   params.append("date", date.value);
-  params.append("name", name.value);
+  params.append("name", userName);
   params.append("type", type.value);
   params.append("start", start.value);
   params.append("end", end.value);
@@ -133,10 +133,15 @@ async function sendData() {
 
   try {
 　
-　if (!name.value) {
-  alert("名前が取得できていません");
-  return;
-}
+　if (!isReady) {
+    alert("まだ読み込み中です");
+    return;
+  }
+
+  if (!userName) {
+    alert("名前が取得できていません");
+    return;
+  }
     
     const res = await fetch(GAS_URL, {
       method: "POST",
