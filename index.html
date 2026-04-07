@@ -105,9 +105,9 @@ input, textarea, select {
 
 <label>勤務区分</label>
 <select id="type">
-<option>昼勤</option>
-<option>夜勤</option>
-<option>休日</option>
+<option value="昼勤">昼勤</option>
+<option value="夜勤">夜勤</option>
+<option value="休日">休日出勤</option>
 </select>
 
 <label>開始</label>
@@ -141,7 +141,7 @@ let userName = "";
 let isReady = false;
 let isSending = false;
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzGXXNSwpWKBJlweG5xC-3e84BxqYjFVD6OHV0YkzOzbK5cXqsqZjIXGzM_l7C8JS0HIQ/exec"; // ←変更
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzIwDZCacd2zRlU0T2DemM6IVbKpjm70RA0_63RF3c0_Ng2LMH0SX_2_aGUo1F7hlC4NA/exec"; // ←変更
 
 // ===== 初期化 =====
 window.onload = async () => {
