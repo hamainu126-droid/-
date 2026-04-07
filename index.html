@@ -6,15 +6,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
-body { margin:0; font-family:-apple-system; background:#f5f5f5; }
-.header { background:#06C755; color:white; text-align:center; padding:16px; font-size:18px; }
-.container { padding:15px; padding-bottom:100px; }
-.card { background:white; border-radius:16px; padding:15px; box-shadow:0 2px 6px rgba(0,0,0,0.05); }
-label { font-size:12px; color:#888; }
-input, textarea, select {
-  width:100%; padding:12px; margin-top:5px; margin-bottom:12px;
-  border-radius:10px; border:1px solid #ddd;
+body {
+  margin:0;
+  font-family:-apple-system;
+  background:#f5f5f5;
 }
+
+.header {
+  background:#06C755;
+  color:white;
+  text-align:center;
+  padding:16px;
+  font-size:18px;
+}
+
+.container {
+  padding:15px;
+  padding-bottom:90px;
+}
+
+.card {
+  background:white;
+  border-radius:16px;
+  padding:15px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+}
+
+label { font-size:12px; color:#888; }
+
+input, textarea, select {
+  width:100%;
+  padding:12px;
+  margin-top:5px;
+  margin-bottom:12px;
+  border-radius:10px;
+  border:1px solid #ddd;
+}
+
 .btn {
   width:100%;
   padding:14px;
@@ -22,16 +50,35 @@ input, textarea, select {
   border-radius:12px;
   font-weight:bold;
 }
-.submit { background:#06C755; color:white; }
-.history { background:#2196F3; color:white; margin-top:10px; }
 
-.footer {
-  position:fixed;
-  bottom:0;
-  width:100%;
-  padding:10px;
-  background:white;
-  box-shadow:0 -2px 6px rgba(0,0,0,0.1);
+.submit { background:#06C755; color:white; }
+
+.linkBtn {
+  margin-top:10px;
+  background:#2196F3;
+  color:white;
+}
+
+/* ローディング */
+.loading {
+  text-align:center;
+  padding:20px;
+  font-size:14px;
+  color:#666;
+}
+
+.spinner {
+  margin:10px auto;
+  width:30px;
+  height:30px;
+  border:4px solid #ddd;
+  border-top:4px solid #06C755;
+  border-radius:50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
 }
 </style>
 </head>
@@ -41,13 +88,20 @@ input, textarea, select {
 <div class="header">📋 日報入力</div>
 
 <div class="container">
+
+<div id="loading" class="loading">
+  <div class="spinner"></div>
+  ユーザー情報取得中...
+</div>
+
+<div id="main" style="display:none;">
 <div class="card">
 
 <label>日付</label>
 <input type="date" id="date">
 
-<label>氏名</label>
-<input type="text" id="name">
+<label>氏名（自動）</label>
+<input type="text" id="name" disabled>
 
 <label>勤務区分</label>
 <select id="type">
@@ -71,29 +125,30 @@ input, textarea, select {
 <label>連絡事項</label>
 <textarea id="note"></textarea>
 
+<button id="submitBtn" class="btn submit" onclick="sendData()">送信する</button>
+<button class="btn linkBtn" onclick="goHistory()">履歴を見る</button>
+
 </div>
 </div>
 
-<div class="footer">
-  <button class="btn submit" onclick="sendData()">送信する</button>
-  <button class="btn history" onclick="goHistory()">履歴を見る</button>
 </div>
 
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <script>
 let userId = "";
-let userName = ""; // ← 追加
-let isReady = false; // ← 追加
+let userName = "";
+let isReady = false;
+let isSending = false;
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzyz_1ebVk5jz2vKhKOp0eNeat8hy6a1O6AELd9M-js2TPFaY8fb35N48b5lXxaTWZAkA/exec";
+const GAS_URL = "YOUR_GAS_URL_HERE"; // ←変更
 
 // ===== 初期化 =====
 window.onload = async () => {
 
   try {
 
-    await liff.init({ liffId: "2009609532-pYjsxOfo" });
+    await liff.init({ liffId: "YOUR_LIFF_ID" });
 
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -108,15 +163,32 @@ window.onload = async () => {
     document.getElementById("name").value = userName;
     document.getElementById("date").value = new Date().toISOString().split('T')[0];
 
-    isReady = true; // ← ここ重要
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("main").style.display = "block";
+
+    isReady = true;
 
   } catch (e) {
-    alert("ユーザー取得失敗：" + e.message);
+    document.getElementById("loading").innerText = "ユーザー取得失敗";
+    console.error(e);
   }
 };
 
 // ===== 送信 =====
 async function sendData() {
+
+  if (!isReady) {
+    alert("まだ読み込み中です");
+    return;
+  }
+
+  if (isSending) return;
+
+  isSending = true;
+
+  const btn = document.getElementById("submitBtn");
+  btn.innerText = "送信中...";
+  btn.disabled = true;
 
   const params = new URLSearchParams();
 
@@ -126,40 +198,47 @@ async function sendData() {
   params.append("type", type.value);
   params.append("start", start.value);
   params.append("end", end.value);
-  params.append("site", site.value);
-  params.append("work", work.value);
-  params.append("note", note.value);
+  params.append("site", site.value || "");
+  params.append("work", work.value || "");
+  params.append("note", note.value || "");
   params.append("userId", userId);
 
   try {
-　
-　if (!isReady) {
-    alert("まだ読み込み中です");
-    return;
-  }
 
-  if (!userName) {
-    alert("名前が取得できていません");
-    return;
-  }
-    
     const res = await fetch(GAS_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded"
-      },
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: params
     });
 
     const text = await res.text();
-    console.log("レスポンス:", text);
 
-    alert("送信成功 👍");
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      json = { status: "OK" };
+    }
 
-    liff.closeWindow();
+    if (json.status === "OK") {
+
+      btn.innerText = "送信完了！";
+
+      setTimeout(() => {
+        liff.closeWindow();
+      }, 800);
+
+    } else {
+      throw new Error(json.message);
+    }
 
   } catch (e) {
-    alert("通信エラー：" + e.message);
+
+    alert("送信失敗：" + e.message);
+
+    btn.innerText = "送信する";
+    btn.disabled = false;
+    isSending = false;
   }
 }
 
