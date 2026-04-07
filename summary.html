@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>月次集計</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont;
+  background: #f5f5f5;
+}
+
+.header {
+  background: #06c755;
+  color: white;
+  padding: 15px;
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.container {
+  padding: 10px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.name {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.label {
+  color: #666;
+}
+
+.value {
+  font-weight: bold;
+}
+
+.select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">📊 月次集計</div>
+
+<div class="container">
+
+  <input type="month" id="month" class="select">
+
+  <div id="app" class="loading">読み込み中...</div>
+
+</div>
+
+<script>
+
+const GAS_URL = "ここにGASのURL";
+
+// 初期化
+async function init() {
+
+  await liff.init({ liffId: "ここにLIFF_ID" });
+
+  // 今月セット
+  const now = new Date();
+  const ym = now.toISOString().slice(0,7);
+  document.getElementById("month").value = ym;
+
+  loadSummary();
+
+  // 月変更時
+  document.getElementById("month").addEventListener("change", loadSummary);
+}
+
+// 集計取得
+async function loadSummary() {
+
+  const app = document.getElementById("app");
+  app.innerHTML = "読み込み中...";
+
+  try {
+
+    const profile = await liff.getProfile();
+    const userId = profile.userId;
+    const month = document.getElementById("month").value;
+
+    const res = await fetch(
+      `${GAS_URL}?mode=summary&userId=${userId}&month=${month}`
+    );
+
+    const json = await res.json();
+
+    if (json.status !== "OK") {
+      app.innerHTML = "エラー：" + json.message;
+      return;
+    }
+
+    render(json.data);
+
+  } catch (e) {
+    app.innerHTML = "通信エラー";
+  }
+}
+
+// 描画
+function render(data) {
+
+  const app = document.getElementById("app");
+
+  if (!data || data.length === 0) {
+    app.innerHTML = "データなし";
+    return;
+  }
+
+  let html = "";
+
+  data.forEach(d => {
+
+    html += `
+      <div class="card">
+        <div class="name">${d.name}</div>
+
+        <div class="row">
+          <div class="label">出勤日数</div>
+          <div class="value">${d.days}日</div>
+        </div>
+
+        <div class="row">
+          <div class="label">昼勤</div>
+          <div class="value">${d.dayShift}回</div>
+        </div>
+
+        <div class="row">
+          <div class="label">夜勤</div>
+          <div class="value">${d.nightShift}回</div>
+        </div>
+
+        <div class="row">
+          <div class="label">休日</div>
+          <div class="value">${d.holiday}日</div>
+        </div>
+
+      </div>
+    `;
+  });
+
+  app.innerHTML = html;
+}
+
+// 起動
+init();
+
+</script>
+
+</body>
+</html>
