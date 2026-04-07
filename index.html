@@ -141,14 +141,14 @@ let userName = "";
 let isReady = false;
 let isSending = false;
 
-const GAS_URL = "YOUR_GAS_URL_HERE"; // ←変更
+const GAS_URL = "https://script.google.com/macros/s/AKfycbybP8ELJzRtxwmaFTV-s5VukR18dw0Qm750X46gOCY1uHj7B3hWXKSgpMpWEd1OWeCUVg/exec"; // ←変更
 
 // ===== 初期化 =====
 window.onload = async () => {
 
   try {
 
-    await liff.init({ liffId: "YOUR_LIFF_ID" });
+    await liff.init({ liffId: "2009609532-pYjsxOfo" });
 
     if (!liff.isLoggedIn()) {
       liff.login();
@@ -177,6 +177,16 @@ window.onload = async () => {
 // ===== 送信 =====
 async function sendData() {
 
+  // ===== 必須チェック =====
+if (!date.value) return alert("日付は必須です");
+if (!userName) return alert("名前取得エラー");
+
+if (!type.value) return alert("勤務区分は必須です");
+if (!start.value) return alert("開始時間は必須です");
+if (!end.value) return alert("終了時間は必須です");
+if (!site.value.trim()) return alert("現場名は必須です");
+if (!work.value.trim()) return alert("作業内容は必須です");
+  
   if (!isReady) {
     alert("まだ読み込み中です");
     return;
