@@ -2,128 +2,211 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>管理</title>
+<title>管理画面</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
 <style>
-body { margin:0; font-family:-apple-system; background:#f5f5f5; }
-.header { background:#06C755; color:white; text-align:center; padding:16px; }
-.container { padding:10px; }
+body {
+  margin: 0;
+  font-family: -apple-system;
+  background: #f5f5f5;
+}
+
+.header {
+  background: #333;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.count {
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+  color: #666;
+}
+
 .card {
-  background:white;
-  border-radius:12px;
-  padding:12px;
-  margin-bottom:10px;
+  background: white;
+  margin: 10px;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+
+.name {
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 5px;
+}
+
+.row {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
 .btn {
-  width:48%;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  color:white;
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  color: white;
 }
-.ok { background:#06C755; }
-.ng { background:#f44336; }
+
+.approve {
+  background: #06c755;
+}
+
+.reject {
+  background: #ff3b30;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">📊 管理</div>
-<div class="container" id="list">読み込み中...</div>
-
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<div class="header">📋 承認管理</div>
+<div class="count" id="count"></div>
+<div id="app" class="loading">読み込み中...</div>
 
 <script>
-let userId = "";
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzIwDZCacd2zRlU0T2DemM6IVbKpjm70RA0_63RF3c0_Ng2LMH0SX_2_aGUo1F7hlC4NA/exec";
 
-window.onload = async () => {
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx0o3mNiH1845hW2U2luqgXHHTn7DT-m73cFdQLCVW9BnJvpQAf08q8UOKoRfXLr8aqhQ/exec";
 
+// 初期化
+async function init() {
   await liff.init({ liffId: "2009609532-iEXDl1k3" });
+  loadList();
+}
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
+// 一覧取得
+async function loadList() {
+
+  const app = document.getElementById("app");
+  const count = document.getElementById("count");
+
+  app.innerHTML = "読み込み中...";
+
+  const profile = await liff.getProfile();
+  const userId = profile.userId;
+
+  const res = await fetch(
+    `${GAS_URL}?mode=list&userId=${userId}`
+  );
+
+  const json = await res.json();
+
+  if (json.status !== "OK") {
+    app.innerHTML = "権限がありません";
     return;
   }
 
-  const profile = await liff.getProfile();
-  userId = profile.userId;
+  count.innerHTML = `未承認：${json.data.length}件`;
 
-  loadData();
-};
-
-// ===== 管理用データ取得（これ1つだけ！）
-async function loadData() {
-
-  try {
-
-    const res = await fetch(`${GAS_URL}?mode=list&userId=${userId}`);
-    const text = await res.text();
-
-    console.log("レスポンス:", text);
-
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      document.getElementById("list").innerText = "データ取得エラー";
-      return;
-    }
-
-    if (json.status !== "OK") {
-      document.getElementById("list").innerText = "権限なし";
-      return;
-    }
-
-    render(json.data || []);
-
-  } catch (e) {
-
-    console.log("エラー:", e);
-    document.getElementById("list").innerText = "通信エラー";
-  }
+  render(json.data);
 }
 
-// ===== 表示
+// 描画
 function render(data) {
+
+  const app = document.getElementById("app");
+
+  if (data.length === 0) {
+    app.innerHTML = "未承認なし 👍";
+    return;
+  }
 
   let html = "";
 
   data.forEach(d => {
 
     html += `
-      <div class="card">
-        <b>${d.name || "名無し"}</b><br>
-        📅 ${d.date}<br>
-        ⏰ ${d.start}〜${d.end}<br>
-        📍 ${d.site}<br>
-        📝 ${d.work}<br>
-        状態：${d.status}<br><br>
+      <div class="card" id="card-${d.id}">
+        <div class="name">${d.name}</div>
 
-        <button class="btn ok" onclick="update('${d.id}','承認')">承認</button>
-        <button class="btn ng" onclick="update('${d.id}','差戻し')">差戻し</button>
+        <div class="row">日付：${d.date}</div>
+        <div class="row">区分：${d.type}</div>
+        <div class="row">時間：${d.start}〜${d.end}</div>
+        <div class="row">現場：${d.site}</div>
+        <div class="row">作業：${d.work}</div>
+        <div class="row">備考：${d.note || "-"}</div>
+
+        <div class="buttons">
+          <button class="btn approve" onclick="approve('${d.id}')">承認</button>
+          <button class="btn reject" onclick="reject('${d.id}')">差戻し</button>
+        </div>
       </div>
     `;
   });
 
-  document.getElementById("list").innerHTML = html || "データなし";
+  app.innerHTML = html;
 }
 
-// ===== 承認・差戻し
-function update(id, status) {
+// 承認
+async function approve(id) {
 
-  const params = new URLSearchParams();
-  params.append("mode", status === "承認" ? "approve" : "reject");
-  params.append("id", id);
-  params.append("userId", userId);
+  const profile = await liff.getProfile();
 
-  fetch(GAS_URL, {
+  await fetch(GAS_URL, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params
-  }).then(() => loadData());
+    body: new URLSearchParams({
+      mode: "approve",
+      id: id,
+      userId: profile.userId
+    })
+  });
+
+  removeCard(id);
 }
+
+// 差戻し
+async function reject(id) {
+
+  const profile = await liff.getProfile();
+
+  await fetch(GAS_URL, {
+    method: "POST",
+    body: new URLSearchParams({
+      mode: "reject",
+      id: id,
+      userId: profile.userId
+    })
+  });
+
+  removeCard(id);
+}
+
+// カード削除（即消える）
+function removeCard(id) {
+
+  const el = document.getElementById("card-" + id);
+  if (el) el.remove();
+
+  // 件数更新
+  const count = document.getElementById("count");
+  const current = parseInt(count.innerText.replace(/[^\d]/g, "")) || 0;
+  count.innerText = `未承認：${Math.max(0, current - 1)}件`;
+}
+
+init();
+
 </script>
+
 </body>
 </html>
