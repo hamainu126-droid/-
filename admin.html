@@ -163,7 +163,7 @@ async function approve(id) {
 
   const profile = await liff.getProfile();
 
-  await fetch(GAS_URL, {
+  const res = await fetch(GAS_URL, {
     method: "POST",
     body: new URLSearchParams({
       mode: "approve",
@@ -172,7 +172,19 @@ async function approve(id) {
     })
   });
 
-  removeCard(id);
+  const json = await res.json();
+
+  if (json.status === "OK") {
+
+    // 即消し（気持ちいい）
+    removeCard(id);
+
+    // 念のため再同期
+    setTimeout(loadList, 500);
+
+  } else {
+    alert("エラー：" + json.message);
+  }
 }
 
 // 差戻し
