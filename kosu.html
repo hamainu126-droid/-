@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+<style>
+body {
+  font-family: sans-serif;
+  margin: 10px;
+  background: #f5f5f5;
+}
+
+.card {
+  background: #fff;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.title {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.row {
+  margin-top: 5px;
+}
+
+input {
+  width: 60px;
+  padding: 5px;
+  font-size: 16px;
+}
+
+.save {
+  margin-top: 5px;
+  background: #06c755;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h3>👷 工数管理</h3>
+<div id="list"></div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz9qrTQ9hu3wgVyUDguRpJZt0nwk3tko7TcEZcjpVcYJAvWJV_n9vdaR8DyFp93j9A6Kg/exec";
+let userId = "";
+
+async function init() {
+  await liff.init({ liffId: "2009609532-KJnZ3foI" });
+
+  if (liff.isLoggedIn()) {
+    const profile = await liff.getProfile();
+    userId = profile.userId;
+  }
+
+  load();
+}
+
+async function load() {
+
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    body: new URLSearchParams({
+      mode: "getKosu"
+    })
+  });
+
+  const data = await res.json();
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach((row, i) => {
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <div class="title">${row[0]}｜${row[1]}</div>
+
+      <div class="row">自社：${row[2]}人</div>
+
+      <div class="row">
+        協力：
+        <input id="p${i}" value="${row[3]}"> 人
+        <button class="save" onclick="save(${i+2})">保存</button>
+      </div>
+
+      <div class="row">合計：${row[4]}人</div>
+
+      <div class="row">👷 ${row[5]}</div>
+    `;
+
+    list.appendChild(div);
+  });
+}
+
+function save(row) {
+
+  const value = document.getElementById("p" + (row-2)).value;
+
+  fetch(GAS_URL, {
+    method: "POST",
+    body: new URLSearchParams({
+      mode: "updateKosu",
+      row: row,
+      value: value,
+      userId: userId
+    })
+  }).then(() => {
+    alert("保存しました");
+    load();
+  });
+}
+
+init();
+</script>
+
+</body>
+</html>
