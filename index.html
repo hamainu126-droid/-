@@ -11,7 +11,6 @@ body {
   font-family:-apple-system;
   background:#f5f5f5;
 }
-
 .header {
   background:#06C755;
   color:white;
@@ -19,21 +18,17 @@ body {
   padding:16px;
   font-size:18px;
 }
-
 .container {
   padding:15px;
   padding-bottom:90px;
 }
-
 .card {
   background:white;
   border-radius:16px;
   padding:15px;
   box-shadow:0 2px 6px rgba(0,0,0,0.05);
 }
-
 label { font-size:12px; color:#888; }
-
 input, textarea, select {
   width:100%;
   padding:12px;
@@ -42,7 +37,6 @@ input, textarea, select {
   border-radius:10px;
   border:1px solid #ddd;
 }
-
 .btn {
   width:100%;
   padding:14px;
@@ -50,23 +44,18 @@ input, textarea, select {
   border-radius:12px;
   font-weight:bold;
 }
-
 .submit { background:#06C755; color:white; }
-
 .linkBtn {
   margin-top:10px;
   background:#2196F3;
   color:white;
 }
-
-/* ローディング */
 .loading {
   text-align:center;
   padding:20px;
   font-size:14px;
   color:#666;
 }
-
 .spinner {
   margin:10px auto;
   width:30px;
@@ -76,7 +65,6 @@ input, textarea, select {
   border-radius:50%;
   animation: spin 1s linear infinite;
 }
-
 @keyframes spin {
   100% { transform: rotate(360deg); }
 }
@@ -117,7 +105,9 @@ input, textarea, select {
 <input type="time" id="end">
 
 <label>現場名</label>
-<input type="text" id="site">
+<select id="site">
+  <option value="">読み込み中...</option>
+</select>
 
 <label>作業内容</label>
 <textarea id="work"></textarea>
@@ -141,11 +131,10 @@ let userName = "";
 let isReady = false;
 let isSending = false;
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbzRtsG5464smqgHfoPbjMLYU3_CGi4IqHLC5hXvMhugrgKCCPiG27BGi5OsxpH5FO2GlQ/exec"; // ←変更
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz3JospvQbLBpI6xAs_siuALd3DfwmUyq7cP5OyjUdcjGKfRoQa77jW4s5xlbcXuLAYEQ/exec";
 
 // ===== 初期化 =====
 window.onload = async () => {
-
   try {
 
     await liff.init({ liffId: "2009609532-pYjsxOfo" });
@@ -163,6 +152,9 @@ window.onload = async () => {
     document.getElementById("name").value = userName;
     document.getElementById("date").value = new Date().toISOString().split('T')[0];
 
+    // 👇 現場一覧ロード
+    await loadSites();
+
     document.getElementById("loading").style.display = "none";
     document.getElementById("main").style.display = "block";
 
@@ -174,24 +166,48 @@ window.onload = async () => {
   }
 };
 
+// ===== 現場一覧取得 =====
+async function loadSites() {
+  try {
+    const res = await fetch(GAS_URL + "?mode=getSites");
+    const data = await res.json();
+
+    const select = document.getElementById("site");
+    select.innerHTML = '<option value="">選択してください</option>';
+
+    data.forEach(site => {
+      const option = document.createElement("option");
+      option.value = site;
+      option.textContent = site;
+      select.appendChild(option);
+    });
+
+  } catch (e) {
+    console.error("現場取得エラー", e);
+    document.getElementById("site").innerHTML =
+      '<option value="">取得失敗</option>';
+  }
+}
+
 // ===== 送信 =====
 async function sendData() {
 
-  // ===== 必須チェック =====
-if (!date.value) return alert("日付は必須です");
-if (!userName) return alert("名前取得エラー");
+  const date = document.getElementById("date");
+  const type = document.getElementById("type");
+  const start = document.getElementById("start");
+  const end = document.getElementById("end");
+  const site = document.getElementById("site");
+  const work = document.getElementById("work");
+  const note = document.getElementById("note");
 
-if (!type.value) return alert("勤務区分は必須です");
-if (!start.value) return alert("開始時間は必須です");
-if (!end.value) return alert("終了時間は必須です");
-if (!site.value.trim()) return alert("現場名は必須です");
-if (!work.value.trim()) return alert("作業内容は必須です");
-  
-  if (!isReady) {
-    alert("まだ読み込み中です");
-    return;
-  }
+  if (!date.value) return alert("日付は必須です");
+  if (!type.value) return alert("勤務区分は必須です");
+  if (!start.value) return alert("開始時間は必須です");
+  if (!end.value) return alert("終了時間は必須です");
+  if (!site.value) return alert("現場名は必須です");
+  if (!work.value.trim()) return alert("作業内容は必須です");
 
+  if (!isReady) return alert("読み込み中です");
   if (isSending) return;
 
   isSending = true;
@@ -208,8 +224,8 @@ if (!work.value.trim()) return alert("作業内容は必須です");
   params.append("type", type.value);
   params.append("start", start.value);
   params.append("end", end.value);
-  params.append("site", site.value || "");
-  params.append("work", work.value || "");
+  params.append("site", site.value);
+  params.append("work", work.value);
   params.append("note", note.value || "");
   params.append("userId", userId);
 
@@ -252,7 +268,7 @@ if (!work.value.trim()) return alert("作業内容は必須です");
   }
 }
 
-// ===== 履歴へ =====
+// ===== 履歴 =====
 function goHistory() {
   location.href = "history.html";
 }
