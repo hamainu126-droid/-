@@ -118,7 +118,7 @@ button {
 <div id="list"></div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwgul5Ms52-wXeYYlzSR_k9gMXtmbKlBloHUQKmx8ogo0ctBT9EzgeGIfnxtEzIDrKfUQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbz1qcBs4x1Kjjunv6e08PYgNMwVL2WVjagDiSR7jtaJsV5Frq_3mVuJyzVFHgD_UX7aaA/exec";
 let userId = "";
 
 // 日付表示用
@@ -224,7 +224,7 @@ async function load() {
       div.className = "card";
 
       div.innerHTML = `
-        <div class="title">${row.site || ""}</div>
+        <div class="title">${row.site}</div>
         <div class="row">📅 ${formatDateNice(row.date)}</div>
         <div class="row">自社：${row.selfCount}人</div>
 
@@ -299,7 +299,7 @@ async function save(rowNumber, inputIndex) {
     alert("保存エラー: " + e.message);
   }
 }
-
+  
 init();
 </script>
 
