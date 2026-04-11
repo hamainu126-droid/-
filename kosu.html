@@ -65,20 +65,24 @@ button {
 <!-- 日付フィルター -->
 <div class="header">
   <input type="date" id="date">
+
+  <select id="site">
+    <option value="">全現場</option>
+  </select>
+
   <button onclick="load()">表示</button>
   <button onclick="setToday()">今日</button>
-  <button onclick="setYesterday()">昨日</button>
 </div>
 
 <div id="list"></div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxa4X8mOdcG0-JqYPWBdAB9LVpq1rCOUhoVMits-ZZaHoO_9CkgQ_1NJJP2WIpERILcQA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx3okNpzml4DD4F88aCNiNLO4ZL6UojRHBhDtmEG8DOSnIo53n-_68gT_ncR1X3sLMcqA/exec";
 let userId = "";
 
 async function init() {
   await liff.init({ liffId: "2009609532-KJnZ3foI" });
-
+　 await loadSites();
   if (liff.isLoggedIn()) {
     const profile = await liff.getProfile();
     userId = profile.userId;
@@ -90,7 +94,26 @@ async function init() {
 
   load();
 }
+async function loadSites() {
 
+  const res = await fetch(GAS_URL, {
+    method: "POST",
+    body: new URLSearchParams({
+      mode: "getSites"
+    })
+  });
+
+  const sites = await res.json();
+
+  const select = document.getElementById("site");
+
+  sites.forEach(site => {
+    const option = document.createElement("option");
+    option.value = site;
+    option.text = site;
+    select.appendChild(option);
+  });
+}
 async function load() {
 
   const date = document.getElementById("date").value;
