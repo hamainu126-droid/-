@@ -118,7 +118,7 @@ button {
 <div id="list"></div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbz1qcBs4x1Kjjunv6e08PYgNMwVL2WVjagDiSR7jtaJsV5Frq_3mVuJyzVFHgD_UX7aaA/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwXNlW_BA38sDvpXT76bpjIbkIE6s1F8i44zfnvrh5cDEvx0JSW0ENO4YVk1MS2u4DVaA/exec";
 let userId = "";
 
 // 日付表示用
@@ -224,20 +224,24 @@ async function load() {
       div.className = "card";
 
       div.innerHTML = `
-        <div class="title">${row.site}</div>
-        <div class="row">📅 ${formatDateNice(row.date)}</div>
-        <div class="row">自社：${row.selfCount}人</div>
+  <div class="title">${row.site}</div>
+  <div class="row">📅 ${formatDateNice(row.date)}</div>
+  <div class="row">自社：${row.selfCount}人</div>
 
-        <div class="row">
-          協力：
-          <input type="number" id="p${i}" value="${row.partnerCount}" min="0">
-          人
-          <button class="save" onclick="save(${row.rowNumber}, ${i})">保存</button>
-        </div>
+  <div class="row">
+    協力：
+    <input type="number" id="p${i}" value="${row.partnerCount}" min="0">
+    人
+    <button class="save" onclick="save(${row.rowNumber}, ${i})">保存</button>
+  </div>
 
-        <div class="row">合計：${row.totalCount}人</div>
-        <div class="row">👷 ${row.members}</div>
-      `;
+  <div class="row">合計：${row.totalCount}人</div>
+
+  <div class="row">参加者</div>
+  <div class="row">
+    <textarea id="m${i}" rows="3" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc; box-sizing:border-box;">${row.members || ""}</textarea>
+  </div>
+`;
 
       list.appendChild(div);
     });
@@ -274,6 +278,7 @@ function setYesterday() {
 // 協力会社人数保存
 async function save(rowNumber, inputIndex) {
   const value = document.getElementById("p" + inputIndex).value;
+  const members = document.getElementById("m" + inputIndex).value;
 
   try {
     const res = await fetch(GAS_URL, {
@@ -282,6 +287,7 @@ async function save(rowNumber, inputIndex) {
         mode: "updateKosu",
         row: rowNumber,
         value: value,
+        members: members,
         userId: userId
       })
     });
