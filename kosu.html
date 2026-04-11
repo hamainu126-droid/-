@@ -118,7 +118,7 @@ button {
 <div id="list"></div>
 
 <script>
-const GAS_URL = "https://script.google.com/macros/s/AKfycbx70vsC8TkKlk-8oy6M1yoDffZk19TA924bcPcrmBoAbAA344oDAGIrMe6LkHHoXClovQ/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwgul5Ms52-wXeYYlzSR_k9gMXtmbKlBloHUQKmx8ogo0ctBT9EzgeGIfnxtEzIDrKfUQ/exec";
 let userId = "";
 
 // 日付表示用
@@ -217,26 +217,26 @@ async function load() {
     let targetDate = "";
 
     data.forEach((row, i) => {
-      totalAll += Number(row[4] || 0);
-      targetDate = row[0];
+      totalAll += Number(row.totalCount || 0);
+      targetDate = row.date;
 
       const div = document.createElement("div");
       div.className = "card";
 
       div.innerHTML = `
-        <div class="title">${row[1] || ""}</div>
-        <div class="row">📅 ${formatDateNice(row[0])}</div>
-        <div class="row">自社：${Number(row[2] || 0)}人</div>
+        <div class="title">${row.site || ""}</div>
+        <div class="row">📅 ${formatDateNice(row.date)}</div>
+        <div class="row">自社：${row.selfCount}人</div>
 
         <div class="row">
           協力：
-          <input type="number" id="p${i}" value="${Number(row[3] || 0)}" min="0">
+          <input type="number" id="p${i}" value="${row.partnerCount}" min="0">
           人
-          <button class="save" onclick="save(${i + 2})">保存</button>
+          <button class="save" onclick="save(${row.rowNumber}, ${i})">保存</button>
         </div>
 
-        <div class="row">合計：${Number(row[4] || 0)}人</div>
-        <div class="row">👷 ${row[5] || ""}</div>
+        <div class="row">合計：${row.totalCount}人</div>
+        <div class="row">👷 ${row.members}</div>
       `;
 
       list.appendChild(div);
@@ -272,8 +272,7 @@ function setYesterday() {
 }
 
 // 協力会社人数保存
-async function save(row) {
-  const inputIndex = row - 2;
+async function save(rowNumber, inputIndex) {
   const value = document.getElementById("p" + inputIndex).value;
 
   try {
@@ -281,7 +280,7 @@ async function save(row) {
       method: "POST",
       body: new URLSearchParams({
         mode: "updateKosu",
-        row: row,
+        row: rowNumber,
         value: value,
         userId: userId
       })
