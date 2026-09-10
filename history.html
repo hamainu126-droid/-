@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -5,158 +6,603 @@
 <title>日報履歴</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
 <style>
-body { margin:0; font-family:-apple-system; background:#f5f5f5; }
-.header { background:#06C755; color:white; text-align:center; padding:16px; }
-.container { padding:10px; }
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  background: #f5f5f5;
+}
+
+.header {
+  background: #2196F3;
+  color: white;
+  text-align: center;
+  padding: 16px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.count {
+  text-align: center;
+  padding: 10px;
+  font-size: 13px;
+  color: #666;
+}
+
+.container {
+  padding-bottom: 80px;
+}
+
 .card {
-  background:white;
-  border-radius:12px;
-  padding:12px;
-  margin-bottom:10px;
+  background: white;
+  margin: 10px;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow:
+    0 2px 6px
+    rgba(0,0,0,0.07);
 }
-.btn {
-  width:100%;
-  padding:10px;
-  background:#2196F3;
-  color:white;
-  border:none;
-  border-radius:8px;
+
+.top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
 }
-.gray {
-  color:#aaa;
-  font-size:12px;
+
+.date {
+  font-weight: bold;
+  font-size: 15px;
 }
+
+.status {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.status-wait {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-ok {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-reject {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.row {
+  font-size: 13px;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.label {
+  color: #777;
+}
+
+.loading {
+  text-align: center;
+  padding: 35px 20px;
+  color: #666;
+}
+
+.spinner {
+  margin: 10px auto;
+  width: 30px;
+  height: 30px;
+  border: 4px solid #ddd;
+  border-top: 4px solid #2196F3;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.backArea {
+  padding: 10px;
+}
+
+.backBtn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  background: #666;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+}
+
 </style>
 </head>
 
 <body>
 
-<div class="header">📋 日報履歴</div>
-<div class="container" id="list">読み込み中...</div>
+<div class="header">
+  📖 日報履歴
+</div>
 
-<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<div id="count" class="count"></div>
+
+<div id="app" class="container">
+
+  <div class="loading">
+    <div class="spinner"></div>
+    履歴を読み込み中...
+  </div>
+
+</div>
+
+<div class="backArea">
+  <button
+    class="backBtn"
+    onclick="goBack()"
+  >
+    日報入力へ戻る
+  </button>
+</div>
+
 
 <script>
+
 let userId = "";
-let allData = []; // ★重要
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw5rSlFtifPqWwo3kpbkbydztYyacqHLetqsGvkfauJ9VMfReZ0EDHuh86VbM3ldD0kjg/exec";
+let isLoading = false;
 
-window.onload = async () => {
 
-  await liff.init({ liffId: "2009609532-jTN2z4s0" });
+/*
+================================================
+ここは現在使っているGAS URLにしてください
+================================================
+*/
+const GAS_URL =
+  "https://script.google.com/macros/s/AKfycbw5rSlFtifPqWwo3kpbkbydztYyacqHLetqsGvkfauJ9VMfReZ0EDHuh86VbM3ldD0kjg/exec";
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
 
-  const profile = await liff.getProfile();
-  userId = profile.userId;
+/*
+================================================
+LIFF
+index.htmlと同じLIFF ID
+================================================
+*/
+const LIFF_ID =
+  "2009609532-pYjsxOfo";
 
-  loadData();
-};
 
-// ===== データ取得 =====
-async function loadData() {
+// ======================================================
+// 初期化
+// ======================================================
+
+async function init() {
 
   try {
 
-    const res = await fetch(`${GAS_URL}?mode=myList&userId=${userId}`);
-    const text = await res.text();
+    await liff.init({
+      liffId: LIFF_ID
+    });
 
-    console.log("レスポンス:", text);
 
-    let json;
-    try {
-      json = JSON.parse(text);
-    } catch {
-      document.getElementById("list").innerText = "データ形式エラー";
+    if (!liff.isLoggedIn()) {
+
+      liff.login();
+
       return;
     }
 
-    // ★ここで保存（重要）
-    allData = (json.data || []).reverse(); // 新しい順
 
-    render();
+    /*
+    プロフィール取得はここで1回だけ
+    */
+    const profile =
+      await liff.getProfile();
 
-  } catch (e) {
-    console.log(e);
-    document.getElementById("list").innerText = "通信エラー";
+
+    userId =
+      profile.userId || "";
+
+
+    if (!userId) {
+
+      throw new Error(
+        "ユーザーIDを取得できませんでした"
+      );
+    }
+
+
+    /*
+    履歴取得
+    */
+    await loadHistory();
+
+
+  } catch (err) {
+
+    console.error(err);
+
+
+    document
+      .getElementById("app")
+      .innerHTML =
+      '<div class="loading">' +
+      '履歴の読み込みに失敗しました。<br>' +
+      'もう一度開き直してください。' +
+      '</div>';
   }
 }
 
-// ===== 表示 =====
-function render() {
 
-  let html = "";
+// ======================================================
+// 履歴取得
+// ======================================================
 
-  allData.forEach(d => {
+async function loadHistory() {
 
-    html += `
-      <div class="card">
-        📅 ${d.date}<br>
-        ⏰ ${d.start}〜${d.end}<br>
-        📍 ${d.site || "-"}<br>
-        📝 ${d.work || "-"}<br>
-        📩 ${d.note || "なし"}<br>
-        状態：${d.status}<br><br>
+  if (isLoading) {
+    return;
+  }
 
-        ${
-          d.status === "未承認"
-            ? `<button class="btn" onclick="edit('${d.id}')">修正</button>`
-            : `<div class="gray">※承認済みのため編集不可</div>`
+
+  isLoading = true;
+
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  const count =
+    document.getElementById(
+      "count"
+    );
+
+
+  try {
+
+    const url =
+      GAS_URL +
+      "?mode=myList&userId=" +
+      encodeURIComponent(userId) +
+      "&_=" +
+      Date.now();
+
+
+    const response =
+      await fetch(
+        url,
+        {
+          method: "GET",
+          cache: "no-store"
         }
-      </div>
-    `;
-  });
+      );
 
-  document.getElementById("list").innerHTML = html || "データなし";
+
+    if (!response.ok) {
+
+      throw new Error(
+        "HTTP " +
+        response.status
+      );
+    }
+
+
+    const result =
+      await response.json();
+
+
+    if (
+      result.status !== "OK"
+    ) {
+
+      throw new Error(
+        result.message ||
+        "履歴取得失敗"
+      );
+    }
+
+
+    const data =
+      Array.isArray(result.data)
+        ? result.data
+        : [];
+
+
+    count.innerText =
+      "表示件数：" +
+      data.length +
+      "件";
+
+
+    renderHistory(
+      data
+    );
+
+
+  } catch (err) {
+
+    console.error(
+      "履歴取得エラー",
+      err
+    );
+
+
+    count.innerText =
+      "";
+
+
+    app.innerHTML =
+      '<div class="loading">' +
+      '履歴を取得できませんでした。' +
+      '</div>';
+
+  } finally {
+
+    isLoading =
+      false;
+  }
 }
 
-// ===== 編集 =====
-window.edit = function(id) {
 
-  const d = allData.find(x => x.id === id);
+// ======================================================
+// 履歴描画
+// ======================================================
 
-  if (!d) {
-    alert("データ取得エラー");
+function renderHistory(data) {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (
+    !data ||
+    data.length === 0
+  ) {
+
+    app.innerHTML =
+      '<div class="loading">' +
+      'まだ日報履歴はありません。' +
+      '</div>';
+
     return;
   }
 
-  if (d.status !== "未承認") {
-    alert("編集できません");
-    return;
-  }
 
-  const newSite = prompt("現場名を修正", d.site || "");
-  if (newSite === null) return;
+  /*
+  HTMLを1件ずつ画面に追加せず、
+  DocumentFragmentでまとめて描画
+  */
+  const fragment =
+    document.createDocumentFragment();
 
-  const newWork = prompt("作業内容を修正", d.work || "");
-  if (newWork === null) return;
 
-  const newNote = prompt("連絡事項を修正", d.note || "") || "";
+  data.forEach(item => {
 
-  const params = new URLSearchParams();
-  params.append("mode", "update");
-  params.append("id", id);
-  params.append("site", newSite); // ←追加
-  params.append("work", newWork);
-  params.append("note", newNote);
-  params.append("userId", userId);
+    const card =
+      document.createElement(
+        "div"
+      );
 
-  fetch(GAS_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params
-  }).then(() => {
-    alert("更新しました 👍");
-    loadData();
+
+    card.className =
+      "card";
+
+
+    const statusInfo =
+      getStatusInfo(
+        item.status
+      );
+
+
+    card.innerHTML = `
+
+      <div class="top">
+
+        <div class="date">
+          ${escapeHtml(item.date)}
+        </div>
+
+        <div
+          class="status ${statusInfo.className}"
+        >
+          ${escapeHtml(statusInfo.text)}
+        </div>
+
+      </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          区分：
+        </span>
+
+        ${escapeHtml(item.type)}
+
+      </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          時間：
+        </span>
+
+        ${escapeHtml(item.start)}
+        〜
+        ${escapeHtml(item.end)}
+
+      </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          現場：
+        </span>
+
+        ${escapeHtml(item.site)}
+
+      </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          作業：
+        </span>
+
+        ${escapeHtml(item.work)}
+
+      </div>
+
+
+      <div class="row">
+
+        <span class="label">
+          連絡事項：
+        </span>
+
+        ${escapeHtml(item.note || "-")}
+
+      </div>
+
+    `;
+
+
+    fragment.appendChild(
+      card
+    );
   });
-};
-  
+
+
+  app.innerHTML =
+    "";
+
+
+  app.appendChild(
+    fragment
+  );
+}
+
+
+// ======================================================
+// 承認状態
+// ======================================================
+
+function getStatusInfo(status) {
+
+  const value =
+    String(
+      status || ""
+    ).trim();
+
+
+  if (
+    value === "承認"
+  ) {
+
+    return {
+      text: "承認済",
+      className: "status-ok"
+    };
+  }
+
+
+  if (
+    value === "差戻し"
+  ) {
+
+    return {
+      text: "差戻し",
+      className: "status-reject"
+    };
+  }
+
+
+  return {
+    text: "未承認",
+    className: "status-wait"
+  };
+}
+
+
+// ======================================================
+// HTMLエスケープ
+// ======================================================
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ""
+  )
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+}
+
+
+// ======================================================
+// 戻る
+// ======================================================
+
+function goBack() {
+
+  location.href =
+    "index.html";
+}
+
+
+// ======================================================
+// 起動
+// ======================================================
+
+init();
+
 </script>
 
 </body>
 </html>
+```
+
