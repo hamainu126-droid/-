@@ -8,9 +8,13 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   background: #f5f5f5;
 }
 
@@ -35,7 +39,7 @@ body {
   margin: 10px;
   padding: 15px;
   border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
 .name {
@@ -62,6 +66,11 @@ body {
   border-radius: 8px;
   font-size: 14px;
   color: white;
+  font-weight: bold;
+}
+
+.btn:disabled {
+  opacity: 0.5;
 }
 
 .approve {
@@ -74,7 +83,8 @@ body {
 
 .loading {
   text-align: center;
-  padding: 20px;
+  padding: 30px;
+  color: #666;
 }
 </style>
 </head>
@@ -87,135 +97,338 @@ body {
 
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw5rSlFtifPqWwo3kpbkbydztYyacqHLetqsGvkfauJ9VMfReZ0EDHuh86VbM3ldD0kjg/exec";
+const GAS_URL =
+  "https://script.google.com/macros/s/AKfycbw5rSlFtifPqWwo3kpbkbydztYyacqHLetqsGvkfauJ9VMfReZ0EDHuh86VbM3ldD0kjg/exec";
 
+let userId = "";
+let isLoading = false;
+
+// ================================
 // 初期化
+// ================================
 async function init() {
-  await liff.init({ liffId: "2009609532-iEXDl1k3" });
-  loadList();
+
+  try {
+
+    await liff.init({
+      liffId: "2009609532-iEXDl1k3"
+    });
+
+    if (!liff.isLoggedIn()) {
+      liff.login();
+      return;
+    }
+
+    // プロフィール取得は最初の1回だけ
+    const profile = await liff.getProfile();
+
+    userId = profile.userId;
+
+    await loadList();
+
+  } catch (e) {
+
+    console.error(e);
+
+    document.getElementById("app").innerHTML =
+      "読み込みに失敗しました。";
+  }
 }
 
+
+// ================================
 // 一覧取得
+// ================================
 async function loadList() {
+
+  if (isLoading) return;
+
+  isLoading = true;
 
   const app = document.getElementById("app");
   const count = document.getElementById("count");
 
+  app.className = "loading";
   app.innerHTML = "読み込み中...";
 
-  const profile = await liff.getProfile();
-  const userId = profile.userId;
+  try {
 
-  const res = await fetch(
-    `${GAS_URL}?mode=list&userId=${userId}`
-  );
+    const url =
+      `${GAS_URL}?mode=list&userId=${encodeURIComponent(userId)}&_=${Date.now()}`;
 
-  const json = await res.json();
+    const res = await fetch(url, {
+      method: "GET",
+      cache: "no-store"
+    });
 
-  if (json.status !== "OK") {
-    app.innerHTML = "権限がありません";
-    return;
+    if (!res.ok) {
+      throw new Error("HTTP " + res.status);
+    }
+
+    const json = await res.json();
+
+    if (json.status !== "OK") {
+
+      count.innerHTML = "";
+
+      app.innerHTML =
+        json.message || "権限がありません";
+
+      return;
+    }
+
+    count.innerHTML =
+      `未承認：${json.data.length}件`;
+
+    render(json.data);
+
+  } catch (e) {
+
+    console.error(e);
+
+    app.innerHTML =
+      "一覧取得に失敗しました。";
+
+  } finally {
+
+    isLoading = false;
   }
-
-  count.innerHTML = `未承認：${json.data.length}件`;
-
-  render(json.data);
 }
 
+
+// ================================
 // 描画
+// ================================
 function render(data) {
 
-  const app = document.getElementById("app");
+  const app =
+    document.getElementById("app");
 
-  if (data.length === 0) {
-    app.innerHTML = "未承認なし 👍";
+  app.className = "";
+
+  if (!data || data.length === 0) {
+
+    app.innerHTML =
+      '<div class="loading">未承認なし 👍</div>';
+
     return;
   }
 
-  let html = "";
+  const fragment =
+    document.createDocumentFragment();
 
   data.forEach(d => {
 
-    html += `
-      <div class="card" id="card-${d.id}">
-        <div class="name">${d.name}</div>
+    const card =
+      document.createElement("div");
 
-        <div class="row">日付：${d.date}</div>
-        <div class="row">区分：${d.type}</div>
-        <div class="row">時間：${d.start}〜${d.end}</div>
-        <div class="row">現場：${d.site}</div>
-        <div class="row">作業：${d.work}</div>
-        <div class="row">備考：${d.note || "-"}</div>
+    card.className = "card";
+    card.id = "card-" + d.id;
 
-        <div class="buttons">
-          <button class="btn approve" onclick="approve('${d.id}')">承認</button>
-          <button class="btn reject" onclick="reject('${d.id}')">差戻し</button>
-        </div>
+    card.innerHTML = `
+      <div class="name">${escapeHtml(d.name)}</div>
+
+      <div class="row">日付：${escapeHtml(d.date)}</div>
+      <div class="row">区分：${escapeHtml(d.type)}</div>
+      <div class="row">時間：${escapeHtml(d.start)}〜${escapeHtml(d.end)}</div>
+      <div class="row">現場：${escapeHtml(d.site)}</div>
+      <div class="row">作業：${escapeHtml(d.work)}</div>
+      <div class="row">備考：${escapeHtml(d.note || "-")}</div>
+
+      <div class="buttons">
+        <button
+          class="btn approve"
+          id="approve-${d.id}"
+          onclick="approve('${d.id}')">
+          承認
+        </button>
+
+        <button
+          class="btn reject"
+          id="reject-${d.id}"
+          onclick="reject('${d.id}')">
+          差戻し
+        </button>
       </div>
     `;
+
+    fragment.appendChild(card);
   });
 
-  app.innerHTML = html;
+  app.innerHTML = "";
+  app.appendChild(fragment);
 }
 
+
+// ================================
 // 承認
+// ================================
 async function approve(id) {
 
-  const profile = await liff.getProfile();
+  lockButtons(id, true);
 
-  const res = await fetch(GAS_URL, {
-    method: "POST",
-    body: new URLSearchParams({
-      mode: "approve",
-      id: id,
-      userId: profile.userId
-    })
-  });
+  try {
 
-  const json = await res.json();
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded;charset=UTF-8"
+      },
+      body: new URLSearchParams({
+        mode: "approve",
+        id: id,
+        userId: userId
+      }).toString()
+    });
 
-  if (json.status === "OK") {
+    const json = await res.json();
 
-    // 即消し（気持ちいい）
+    if (json.status !== "OK") {
+      throw new Error(
+        json.message || "承認失敗"
+      );
+    }
+
+    // 成功したら即削除
     removeCard(id);
 
-    // 念のため再同期
-    setTimeout(loadList, 500);
+    // 再同期は毎回しない
+    // 必要なら画面再読み込み時に同期
 
-  } else {
-    alert("エラー：" + json.message);
+  } catch (e) {
+
+    alert("エラー：" + e.message);
+
+    lockButtons(id, false);
   }
 }
 
+
+// ================================
 // 差戻し
+// ================================
 async function reject(id) {
 
-  const profile = await liff.getProfile();
+  lockButtons(id, true);
 
-  await fetch(GAS_URL, {
-    method: "POST",
-    body: new URLSearchParams({
-      mode: "reject",
-      id: id,
-      userId: profile.userId
-    })
-  });
+  try {
 
-  removeCard(id);
+    const res = await fetch(GAS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/x-www-form-urlencoded;charset=UTF-8"
+      },
+      body: new URLSearchParams({
+        mode: "reject",
+        id: id,
+        userId: userId
+      }).toString()
+    });
+
+    const json = await res.json();
+
+    if (json.status !== "OK") {
+      throw new Error(
+        json.message || "差戻し失敗"
+      );
+    }
+
+    removeCard(id);
+
+  } catch (e) {
+
+    alert("エラー：" + e.message);
+
+    lockButtons(id, false);
+  }
 }
 
-// カード削除（即消える）
+
+// ================================
+// ボタンロック
+// ================================
+function lockButtons(id, locked) {
+
+  const approve =
+    document.getElementById("approve-" + id);
+
+  const reject =
+    document.getElementById("reject-" + id);
+
+  if (approve) {
+
+    approve.disabled = locked;
+
+    approve.innerText =
+      locked ? "処理中..." : "承認";
+  }
+
+  if (reject) {
+
+    reject.disabled = locked;
+  }
+}
+
+
+// ================================
+// カード削除
+// ================================
 function removeCard(id) {
 
-  const el = document.getElementById("card-" + id);
-  if (el) el.remove();
+  const el =
+    document.getElementById(
+      "card-" + id
+    );
 
-  // 件数更新
-  const count = document.getElementById("count");
-  const current = parseInt(count.innerText.replace(/[^\d]/g, "")) || 0;
-  count.innerText = `未承認：${Math.max(0, current - 1)}件`;
+  if (el) {
+    el.remove();
+  }
+
+  const count =
+    document.getElementById("count");
+
+  const current =
+    parseInt(
+      count.innerText.replace(
+        /[^\d]/g,
+        ""
+      )
+    ) || 0;
+
+  const next =
+    Math.max(
+      0,
+      current - 1
+    );
+
+  count.innerText =
+    `未承認：${next}件`;
+
+  if (next === 0) {
+
+    document.getElementById("app").innerHTML =
+      '<div class="loading">未承認なし 👍</div>';
+  }
 }
 
+
+// ================================
+// HTMLエスケープ
+// ================================
+function escapeHtml(value) {
+
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+// 起動
 init();
 
 </script>
