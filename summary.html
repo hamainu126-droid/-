@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,67 +9,141 @@
 <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
 <style>
+
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   background: #f5f5f5;
 }
 
 .header {
-  background: #06c755;
+  background: #673ab7;
   color: white;
-  padding: 15px;
-  font-size: 18px;
   text-align: center;
+  padding: 16px;
+  font-size: 18px;
   font-weight: bold;
 }
 
 .container {
-  padding: 10px;
+  padding: 12px;
+  padding-bottom: 80px;
 }
 
-.card {
+.filterCard {
   background: white;
+  padding: 14px;
   border-radius: 12px;
+  margin-bottom: 12px;
+  box-shadow:
+    0 2px 6px
+    rgba(0,0,0,0.06);
+}
+
+label {
+  display: block;
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 5px;
+}
+
+input[type="month"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+}
+
+.summaryCard {
+  background: white;
+  margin-bottom: 12px;
   padding: 15px;
-  margin-bottom: 10px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow:
+    0 2px 6px
+    rgba(0,0,0,0.06);
 }
 
 .name {
-  font-size: 18px;
   font-weight: bold;
-  margin-bottom: 10px;
-}
-
-.row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 5px;
-  font-size: 14px;
-}
-
-.label {
-  color: #666;
-}
-
-.value {
-  font-weight: bold;
-}
-
-.select {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
   font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, 1fr);
+  gap: 10px;
+}
+
+.box {
+  background: #f7f7f7;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.boxLabel {
+  font-size: 11px;
+  color: #777;
+  margin-bottom: 5px;
+}
+
+.boxValue {
+  font-size: 22px;
+  font-weight: bold;
 }
 
 .loading {
   text-align: center;
-  padding: 20px;
+  padding: 35px 20px;
   color: #666;
+}
+
+.spinner {
+  margin: 10px auto;
+  width: 30px;
+  height: 30px;
+  border: 4px solid #ddd;
+  border-top: 4px solid #673ab7;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.totalCount {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.backBtn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 10px;
+  background: #666;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  margin-top: 5px;
 }
 
 </style>
@@ -76,115 +151,521 @@ body {
 
 <body>
 
-<div class="header">📊 月次集計</div>
+<div class="header">
+  📊 月次集計
+</div>
 
 <div class="container">
 
-  <input type="month" id="month" class="select">
+  <div class="filterCard">
 
-  <div id="app" class="loading">読み込み中...</div>
+    <label>
+      集計月
+    </label>
+
+    <input
+      type="month"
+      id="month"
+    >
+
+  </div>
+
+  <div
+    id="count"
+    class="totalCount"
+  ></div>
+
+  <div id="app">
+
+    <div class="loading">
+      <div class="spinner"></div>
+      集計を読み込み中...
+    </div>
+
+  </div>
+
+  <button
+    class="backBtn"
+    onclick="goBack()"
+  >
+    日報入力へ戻る
+  </button>
 
 </div>
 
 <script>
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbw5rSlFtifPqWwo3kpbkbydztYyacqHLetqsGvkfauJ9VMfReZ0EDHuh86VbM3ldD0kjg/exec";
+let userId = "";
 
+let isLoading = false;
+
+
+/*
+================================================
+現在デプロイ済みのGAS URL
+================================================
+*/
+const GAS_URL =
+  "https://script.google.com/macros/s/AKfycbw5rSlFtifPqWwo3kpbkbydztYyacqHLetqsGvkfauJ9VMfReZ0EDHuh86VbM3ldD0kjg/exec";
+
+
+/*
+================================================
+index.htmlと同じLIFF ID
+================================================
+*/
+const LIFF_ID =
+  "2009609532-pYjsxOfo";
+
+
+// ======================================================
 // 初期化
+// ======================================================
+
 async function init() {
-
-  await liff.init({ liffId: "2009609532-5mtBCnrE" });
-
-  // 今月セット
-  const now = new Date();
-  const ym = now.toISOString().slice(0,7);
-  document.getElementById("month").value = ym;
-
-  loadSummary();
-
-  // 月変更時
-  document.getElementById("month").addEventListener("change", loadSummary);
-}
-
-// 集計取得
-async function loadSummary() {
-
-  const app = document.getElementById("app");
-  app.innerHTML = "読み込み中...";
 
   try {
 
-    const profile = await liff.getProfile();
-    const userId = profile.userId;
-    const month = document.getElementById("month").value;
+    await liff.init({
+      liffId: LIFF_ID
+    });
 
-    const res = await fetch(
-      `${GAS_URL}?mode=summary&userId=${userId}&month=${month}`
-    );
 
-    const json = await res.json();
+    if (!liff.isLoggedIn()) {
 
-    if (json.status !== "OK") {
-      app.innerHTML = "エラー：" + json.message;
+      liff.login();
+
       return;
     }
 
-    render(json.data);
 
-  } catch (e) {
-    app.innerHTML = "通信エラー";
+    /*
+    プロフィール取得は最初の1回だけ
+    */
+    const profile =
+      await liff.getProfile();
+
+
+    userId =
+      profile.userId || "";
+
+
+    if (!userId) {
+
+      throw new Error(
+        "ユーザーIDを取得できませんでした"
+      );
+    }
+
+
+    /*
+    今月を初期表示
+    */
+    const monthInput =
+      document.getElementById(
+        "month"
+      );
+
+
+    monthInput.value =
+      getCurrentMonthJapan();
+
+
+    /*
+    月変更時だけ再取得
+    */
+    monthInput.addEventListener(
+      "change",
+      () => {
+
+        loadSummary();
+      }
+    );
+
+
+    /*
+    初回集計
+    */
+    await loadSummary();
+
+
+  } catch (err) {
+
+    console.error(err);
+
+
+    document
+      .getElementById("app")
+      .innerHTML =
+      '<div class="loading">' +
+      '月次集計の読み込みに失敗しました。<br>' +
+      'もう一度開き直してください。' +
+      '</div>';
   }
 }
 
-// 描画
-function render(data) {
 
-  const app = document.getElementById("app");
+// ======================================================
+// 日本時間の今月
+// ======================================================
 
-  if (!data || data.length === 0) {
-    app.innerHTML = "データなし";
+function getCurrentMonthJapan() {
+
+  const now =
+    new Date();
+
+
+  const japan =
+    new Date(
+      now.toLocaleString(
+        "en-US",
+        {
+          timeZone:
+            "Asia/Tokyo"
+        }
+      )
+    );
+
+
+  const year =
+    japan.getFullYear();
+
+
+  const month =
+    String(
+      japan.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    );
+
+
+  return (
+    year +
+    "-" +
+    month
+  );
+}
+
+
+// ======================================================
+// 月次集計取得
+// ======================================================
+
+async function loadSummary() {
+
+  if (isLoading) {
     return;
   }
 
-  let html = "";
 
-  data.forEach(d => {
+  const month =
+    document
+      .getElementById("month")
+      .value;
 
-    html += `
-      <div class="card">
-        <div class="name">${d.name}</div>
 
-        <div class="row">
-          <div class="label">出勤日数</div>
-          <div class="value">${d.days}日</div>
+  if (!month) {
+    return;
+  }
+
+
+  isLoading =
+    true;
+
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  const count =
+    document.getElementById(
+      "count"
+    );
+
+
+  app.innerHTML =
+    `
+    <div class="loading">
+      <div class="spinner"></div>
+      集計を読み込み中...
+    </div>
+    `;
+
+
+  count.innerText =
+    "";
+
+
+  try {
+
+    const url =
+      GAS_URL +
+      "?mode=summary" +
+      "&userId=" +
+      encodeURIComponent(userId) +
+      "&month=" +
+      encodeURIComponent(month) +
+      "&_=" +
+      Date.now();
+
+
+    const response =
+      await fetch(
+        url,
+        {
+          method: "GET",
+          cache: "no-store"
+        }
+      );
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        "HTTP " +
+        response.status
+      );
+    }
+
+
+    const result =
+      await response.json();
+
+
+    if (
+      result.status !== "OK"
+    ) {
+
+      throw new Error(
+        result.message ||
+        "集計取得失敗"
+      );
+    }
+
+
+    const data =
+      Array.isArray(
+        result.data
+      )
+        ? result.data
+        : [];
+
+
+    count.innerText =
+      data.length > 0
+        ? "集計対象：" +
+          data.length +
+          "名"
+        : "";
+
+
+    renderSummary(
+      data
+    );
+
+
+  } catch (err) {
+
+    console.error(
+      "月次集計取得エラー",
+      err
+    );
+
+
+    app.innerHTML =
+      '<div class="loading">' +
+      '集計データを取得できませんでした。' +
+      '</div>';
+
+  } finally {
+
+    isLoading =
+      false;
+  }
+}
+
+
+// ======================================================
+// 描画
+// ======================================================
+
+function renderSummary(data) {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (
+    !data ||
+    data.length === 0
+  ) {
+
+    app.innerHTML =
+      '<div class="loading">' +
+      'この月のデータはありません。' +
+      '</div>';
+
+    return;
+  }
+
+
+  /*
+  DOMへ1件ずつ直接追加せず
+  DocumentFragmentでまとめて表示
+  */
+  const fragment =
+    document.createDocumentFragment();
+
+
+  data.forEach(item => {
+
+    const card =
+      document.createElement(
+        "div"
+      );
+
+
+    card.className =
+      "summaryCard";
+
+
+    card.innerHTML = `
+
+      <div class="name">
+        ${escapeHtml(item.name)}
+      </div>
+
+
+      <div class="grid">
+
+        <div class="box">
+
+          <div class="boxLabel">
+            出勤日数
+          </div>
+
+          <div class="boxValue">
+            ${Number(item.days || 0)}
+          </div>
+
         </div>
 
-        <div class="row">
-          <div class="label">昼勤</div>
-          <div class="value">${d.dayShift}回</div>
+
+        <div class="box">
+
+          <div class="boxLabel">
+            昼勤
+          </div>
+
+          <div class="boxValue">
+            ${Number(item.dayShift || 0)}
+          </div>
+
         </div>
 
-        <div class="row">
-          <div class="label">夜勤</div>
-          <div class="value">${d.nightShift}回</div>
+
+        <div class="box">
+
+          <div class="boxLabel">
+            夜勤
+          </div>
+
+          <div class="boxValue">
+            ${Number(item.nightShift || 0)}
+          </div>
+
         </div>
 
-       <div class="row">
-  <div class="label">休日出勤</div>
-  <div class="value">${d.holidayWork}回</div>
-</div>
+
+        <div class="box">
+
+          <div class="boxLabel">
+            休日出勤
+          </div>
+
+          <div class="boxValue">
+            ${Number(item.holidayWork || 0)}
+          </div>
+
+        </div>
 
       </div>
     `;
+
+
+    fragment.appendChild(
+      card
+    );
   });
 
-  app.innerHTML = html;
+
+  app.innerHTML =
+    "";
+
+
+  app.appendChild(
+    fragment
+  );
 }
 
+
+// ======================================================
+// HTMLエスケープ
+// ======================================================
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ""
+  )
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+}
+
+
+// ======================================================
+// 戻る
+// ======================================================
+
+function goBack() {
+
+  location.href =
+    "index.html";
+}
+
+
+// ======================================================
 // 起動
+// ======================================================
+
 init();
 
 </script>
 
 </body>
 </html>
+```
+
