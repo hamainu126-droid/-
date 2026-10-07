@@ -673,6 +673,14 @@ async function loadSites() {
 
 async function sendData() {
 
+  // ==========================================
+  // 二重タップ防止
+  // ==========================================
+  if (isSending) {
+    return;
+  }
+
+
   if (!isReady) {
 
     alert(
@@ -693,58 +701,37 @@ async function sendData() {
   }
 
 
-  if (isSending) {
-    return;
-  }
-
-
+  // ==========================================
+  // 入力項目取得
+  // ==========================================
   const date =
-    document.getElementById(
-      "date"
-    );
-
+    document.getElementById("date");
 
   const type =
-    document.getElementById(
-      "type"
-    );
-
+    document.getElementById("type");
 
   const start =
-    document.getElementById(
-      "start"
-    );
-
+    document.getElementById("start");
 
   const end =
-    document.getElementById(
-      "end"
-    );
-
+    document.getElementById("end");
 
   const site =
-    document.getElementById(
-      "site"
-    );
-
+    document.getElementById("site");
 
   const work =
-    document.getElementById(
-      "work"
-    );
-
+    document.getElementById("work");
 
   const note =
-    document.getElementById(
-      "note"
-    );
+    document.getElementById("note");
 
 
+  // ==========================================
+  // 入力チェック
+  // ==========================================
   if (!date.value) {
 
-    alert(
-      "日付は必須です"
-    );
+    alert("日付は必須です");
 
     return;
   }
@@ -752,9 +739,7 @@ async function sendData() {
 
   if (!type.value) {
 
-    alert(
-      "勤務区分は必須です"
-    );
+    alert("勤務区分は必須です");
 
     return;
   }
@@ -762,9 +747,7 @@ async function sendData() {
 
   if (!start.value) {
 
-    alert(
-      "開始時間は必須です"
-    );
+    alert("開始時間は必須です");
 
     return;
   }
@@ -772,9 +755,7 @@ async function sendData() {
 
   if (!end.value) {
 
-    alert(
-      "終了時間は必須です"
-    );
+    alert("終了時間は必須です");
 
     return;
   }
@@ -782,28 +763,25 @@ async function sendData() {
 
   if (!site.value) {
 
-    alert(
-      "現場名は必須です"
-    );
+    alert("現場名は必須です");
 
     return;
   }
 
 
-  if (
-    !work.value.trim()
-  ) {
+  if (!work.value.trim()) {
 
-    alert(
-      "作業内容は必須です"
-    );
+    alert("作業内容は必須です");
 
     return;
   }
 
 
-  isSending =
-    true;
+  // ==========================================
+  // ここで即ロック
+  // これ以降は連打しても動かない
+  // ==========================================
+  isSending = true;
 
 
   const button =
@@ -812,14 +790,15 @@ async function sendData() {
     );
 
 
+  button.disabled = true;
+
   button.innerText =
     "送信中...";
 
 
-  button.disabled =
-    true;
-
-
+  // ==========================================
+  // GAS送信用データ
+  // ==========================================
   const params =
     new URLSearchParams();
 
@@ -880,6 +859,9 @@ async function sendData() {
 
   try {
 
+    // ==========================================
+    // GASへ送信
+    // ==========================================
     const response =
       await fetch(
         GAS_URL,
@@ -897,6 +879,15 @@ async function sendData() {
       );
 
 
+    if (!response.ok) {
+
+      throw new Error(
+        "通信エラー：" +
+        response.status
+      );
+    }
+
+
     const text =
       await response.text();
 
@@ -912,9 +903,10 @@ async function sendData() {
     } catch (err) {
 
       console.error(
-        "JSON変換エラー",
+        "GAS応答：",
         text
       );
+
 
       throw new Error(
         "サーバー応答エラー"
@@ -922,29 +914,50 @@ async function sendData() {
     }
 
 
+    // ==========================================
+    // 成功
+    // ==========================================
     if (
       result.status === "OK"
     ) {
 
-      button.innerText =
-        "送信完了！";
+
+      // GAS側で二重送信を止めた場合
+      if (
+        result.duplicate === true
+      ) {
+
+        button.innerText =
+          "送信済み";
+
+      } else {
+
+        button.innerText =
+          "送信完了！";
+      }
 
 
-      setTimeout(() => {
+      // ==========================================
+      // 画面を閉じる
+      // ==========================================
+      setTimeout(
+        function() {
 
-        if (
-          liff.isInClient()
-        ) {
+          if (
+            liff.isInClient()
+          ) {
 
-          liff.closeWindow();
+            liff.closeWindow();
 
-        } else {
+          } else {
 
-          button.innerText =
-            "送信しました";
-        }
+            button.innerText =
+              "送信しました";
+          }
 
-      }, 600);
+        },
+        600
+      );
 
 
     } else {
@@ -958,9 +971,7 @@ async function sendData() {
 
   } catch (err) {
 
-    console.error(
-      err
-    );
+    console.error(err);
 
 
     alert(
@@ -969,6 +980,9 @@ async function sendData() {
     );
 
 
+    // ==========================================
+    // エラー時だけボタン復活
+    // ==========================================
     button.innerText =
       "送信する";
 
